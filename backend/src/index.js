@@ -641,6 +641,20 @@ app.put("/auth/me", authRequired, async (req, res) => {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
+      const before = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          linkedinUrl: true,
+          githubUrl: true,
+          linkedinChoice: true,
+          githubChoice: true,
+          profileQueueNumber: true,
+        },
+      })
+      if (!before) {
+        throw new Error("User not found.")
+      }
+
       const user = await tx.user.update({
         where: { id: userId },
         data: nextData,
@@ -662,18 +676,27 @@ app.put("/auth/me", authRequired, async (req, res) => {
         },
       })
 
-      // Assign queue number once when both choices are submitted (YES with URL or NO)
-      await tx.$executeRawUnsafe(`
-        UPDATE "User"
-        SET "profileQueueNumber" = nextval('profile_queue_seq'),
-            "queuedAt" = now()
-        WHERE id = $1
-          AND "profileQueueNumber" IS NULL
-          AND "linkedinChoice" IS NOT NULL
-          AND "githubChoice" IS NOT NULL
-          AND (("linkedinChoice" = 'NO') OR ("linkedinChoice" = 'YES' AND "linkedinUrl" IS NOT NULL))
-          AND (("githubChoice" = 'NO') OR ("githubChoice" = 'YES' AND "githubUrl" IS NOT NULL));
-      `, userId)
+      const isComplete =
+        user.linkedinChoice &&
+        user.githubChoice &&
+        ((user.linkedinChoice === "NO") || (user.linkedinChoice === "YES" && user.linkedinUrl)) &&
+        ((user.githubChoice === "NO") || (user.githubChoice === "YES" && user.githubUrl))
+
+      const changed =
+        before.linkedinUrl !== user.linkedinUrl ||
+        before.githubUrl !== user.githubUrl ||
+        before.linkedinChoice !== user.linkedinChoice ||
+        before.githubChoice !== user.githubChoice
+
+      // Queue behavior:
+      // - First time completing both choices => assign queue number
+      // - Any later edit to either URL/choice => assign a NEW queue number (moves user later in order)
+      if (isComplete && (before.profileQueueNumber === null || changed)) {
+        await tx.$executeRawUnsafe(
+          `UPDATE "User" SET "profileQueueNumber" = nextval('profile_queue_seq'), "queuedAt" = now() WHERE id = $1;`,
+          userId,
+        )
+      }
 
       return tx.user.findUnique({
         where: { id: userId },
