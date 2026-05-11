@@ -766,6 +766,13 @@ app.post("/admin/login", async (req, res) => {
 
 app.get("/admin/participants", adminRequired, async (req, res) => {
   try {
+    const queueRows = await prisma.$queryRawUnsafe(`
+      SELECT id, row_number() OVER (ORDER BY "queuedAt" ASC, "profileQueueNumber" ASC, "createdAt" ASC) AS "queuePosition"
+      FROM "User"
+      WHERE "queuedAt" IS NOT NULL;
+    `)
+    const queuePositionById = new Map(queueRows.map((row) => [row.id, Number(row.queuePosition)]))
+
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -787,7 +794,7 @@ app.get("/admin/participants", adminRequired, async (req, res) => {
       githubUrl: user.githubUrl ?? null,
       linkedinChoice: user.linkedinChoice ?? null,
       githubChoice: user.githubChoice ?? null,
-      profileQueueNumber: user.profileQueueNumber ?? null,
+      profileQueueNumber: queuePositionById.get(user.id) ?? null,
       queuedAt: user.queuedAt ?? null,
       phone: user.phone,
       year: user.year,
