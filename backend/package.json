@@ -6,7 +6,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate": "prisma db push --skip-generate",
     "prisma:sync": "prisma db push --skip-generate"
   },
   "dependencies": {

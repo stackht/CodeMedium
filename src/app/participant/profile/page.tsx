@@ -19,15 +19,20 @@ export default function ParticipantProfilePage() {
     branch: string
     linkedinUrl?: string | null
     githubUrl?: string | null
+    linkedinChoice?: "YES" | "NO" | null
+    githubChoice?: "YES" | "NO" | null
+    profileQueueNumber?: number | null
   } | null>(null)
-  const [hasLinkedIn, setHasLinkedIn] = useState<"yes" | "no">("no")
+  const [hasLinkedIn, setHasLinkedIn] = useState<"yes" | "no" | "unset">("unset")
   const [linkedInUrl, setLinkedInUrl] = useState("")
-  const [hasGithub, setHasGithub] = useState<"yes" | "no">("no")
+  const [hasGithub, setHasGithub] = useState<"yes" | "no" | "unset">("unset")
   const [githubUrl, setGithubUrl] = useState("")
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
   const linkedInLocked = !!profile?.linkedinUrl
   const githubLocked = !!profile?.githubUrl
+  const linkedInNoSelected = profile?.linkedinChoice === "NO" && !profile?.linkedinUrl
+  const githubNoSelected = profile?.githubChoice === "NO" && !profile?.githubUrl
 
   useEffect(() => {
     const token = localStorage.getItem("cmd_token")
@@ -51,9 +56,9 @@ export default function ParticipantProfilePage() {
         setProfile(data.user)
         const li = data.user?.linkedinUrl || ""
         const gh = data.user?.githubUrl || ""
-        setHasLinkedIn(li ? "yes" : "no")
+        setHasLinkedIn(li ? "yes" : (data.user?.linkedinChoice === "NO" ? "no" : "unset"))
         setLinkedInUrl(li || "")
-        setHasGithub(gh ? "yes" : "no")
+        setHasGithub(gh ? "yes" : (data.user?.githubChoice === "NO" ? "no" : "unset"))
         setGithubUrl(gh || "")
       }
     }
@@ -66,9 +71,29 @@ export default function ParticipantProfilePage() {
     setSaving(true)
     setSaveMessage("")
     try {
+      if ((linkedInLocked || hasLinkedIn === "yes") && !linkedInUrl.trim()) {
+        throw new Error("LinkedIn URL is required when selecting Yes.")
+      }
+      if ((githubLocked || hasGithub === "yes") && !githubUrl.trim()) {
+        throw new Error("GitHub URL is required when selecting Yes.")
+      }
       const payload = {
-        linkedinUrl: (linkedInLocked || hasLinkedIn === "yes") ? linkedInUrl : null,
-        githubUrl: (githubLocked || hasGithub === "yes") ? githubUrl : null,
+        linkedinChoice: linkedInLocked
+          ? "YES"
+          : hasLinkedIn === "yes"
+            ? "YES"
+            : hasLinkedIn === "no"
+              ? "NO"
+              : null,
+        githubChoice: githubLocked
+          ? "YES"
+          : hasGithub === "yes"
+            ? "YES"
+            : hasGithub === "no"
+              ? "NO"
+              : null,
+        linkedinUrl: (linkedInLocked || hasLinkedIn === "yes") ? linkedInUrl.trim() : null,
+        githubUrl: (githubLocked || hasGithub === "yes") ? githubUrl.trim() : null,
       }
       const response = await fetch(`${apiBase}/auth/me`, {
         method: "PUT",
@@ -155,7 +180,7 @@ export default function ParticipantProfilePage() {
                 LinkedIn Profile?
               </div>
 
-              {!linkedInLocked && (
+              {!linkedInLocked && !linkedInNoSelected && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   <Button
                     type="button"
@@ -173,6 +198,17 @@ export default function ParticipantProfilePage() {
                     className={hasLinkedIn === "no" ? "" : "opacity-60 hover:opacity-100"}
                   >
                     No
+                  </Button>
+                </div>
+              )}
+
+              {!linkedInLocked && linkedInNoSelected && (
+                <div className="mt-3">
+                  <Button
+                    type="button"
+                    onClick={() => setHasLinkedIn("yes")}
+                  >
+                    Edit
                   </Button>
                 </div>
               )}
@@ -208,7 +244,7 @@ export default function ParticipantProfilePage() {
                 GitHub Profile?
               </div>
 
-              {!githubLocked && (
+              {!githubLocked && !githubNoSelected && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   <Button
                     type="button"
@@ -226,6 +262,17 @@ export default function ParticipantProfilePage() {
                     className={hasGithub === "no" ? "" : "opacity-60 hover:opacity-100"}
                   >
                     No
+                  </Button>
+                </div>
+              )}
+
+              {!githubLocked && githubNoSelected && (
+                <div className="mt-3">
+                  <Button
+                    type="button"
+                    onClick={() => setHasGithub("yes")}
+                  >
+                    Edit
                   </Button>
                 </div>
               )}

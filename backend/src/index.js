@@ -127,6 +127,8 @@ const optionalUrlSchema = z.preprocess(
 )
 
 const updateProfileSchema = z.object({
+  linkedinChoice: z.enum(["YES", "NO"]).nullable().optional(),
+  githubChoice: z.enum(["YES", "NO"]).nullable().optional(),
   linkedinUrl: optionalUrlSchema.optional(),
   githubUrl: optionalUrlSchema.optional(),
 })
@@ -598,6 +600,10 @@ app.get("/auth/me", authRequired, async (req, res) => {
         branch: true,
         linkedinUrl: true,
         githubUrl: true,
+        linkedinChoice: true,
+        githubChoice: true,
+        profileQueueNumber: true,
+        queuedAt: true,
         createdAt: true,
       },
     })
@@ -613,25 +619,83 @@ app.get("/auth/me", authRequired, async (req, res) => {
 app.put("/auth/me", authRequired, async (req, res) => {
   try {
     const data = updateProfileSchema.parse(req.body)
-    const updated = await prisma.user.update({
-      where: { id: req.userId },
-      data: {
-        ...(data.linkedinUrl !== undefined ? { linkedinUrl: data.linkedinUrl } : {}),
-        ...(data.githubUrl !== undefined ? { githubUrl: data.githubUrl } : {}),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        phone: true,
-        year: true,
-        branch: true,
-        linkedinUrl: true,
-        githubUrl: true,
-        createdAt: true,
-      },
+
+    const userId = req.userId
+
+    const nextData = {}
+
+    if (data.linkedinChoice !== undefined) nextData.linkedinChoice = data.linkedinChoice
+    if (data.githubChoice !== undefined) nextData.githubChoice = data.githubChoice
+
+    if (data.linkedinChoice === "NO") nextData.linkedinUrl = null
+    else if (data.linkedinUrl !== undefined) nextData.linkedinUrl = data.linkedinUrl
+
+    if (data.githubChoice === "NO") nextData.githubUrl = null
+    else if (data.githubUrl !== undefined) nextData.githubUrl = data.githubUrl
+
+    if (data.linkedinChoice === "YES" && !nextData.linkedinUrl) {
+      throw new Error("LinkedIn URL is required when selecting Yes.")
+    }
+    if (data.githubChoice === "YES" && !nextData.githubUrl) {
+      throw new Error("GitHub URL is required when selecting Yes.")
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: nextData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true,
+          phone: true,
+          year: true,
+          branch: true,
+          linkedinUrl: true,
+          githubUrl: true,
+          linkedinChoice: true,
+          githubChoice: true,
+          profileQueueNumber: true,
+          queuedAt: true,
+          createdAt: true,
+        },
+      })
+
+      // Assign queue number once when both choices are submitted (YES with URL or NO)
+      await tx.$executeRawUnsafe(`
+        UPDATE "User"
+        SET "profileQueueNumber" = nextval('profile_queue_seq'),
+            "queuedAt" = now()
+        WHERE id = $1
+          AND "profileQueueNumber" IS NULL
+          AND "linkedinChoice" IS NOT NULL
+          AND "githubChoice" IS NOT NULL
+          AND (("linkedinChoice" = 'NO') OR ("linkedinChoice" = 'YES' AND "linkedinUrl" IS NOT NULL))
+          AND (("githubChoice" = 'NO') OR ("githubChoice" = 'YES' AND "githubUrl" IS NOT NULL));
+      `, userId)
+
+      return tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true,
+          phone: true,
+          year: true,
+          branch: true,
+          linkedinUrl: true,
+          githubUrl: true,
+          linkedinChoice: true,
+          githubChoice: true,
+          profileQueueNumber: true,
+          queuedAt: true,
+          createdAt: true,
+        },
+      })
     })
+
     return res.json({ ok: true, user: updated })
   } catch (error) {
     return res.status(400).json({ ok: false, message: error.message })
@@ -697,6 +761,10 @@ app.get("/admin/participants", adminRequired, async (req, res) => {
       email: user.email,
       linkedinUrl: user.linkedinUrl ?? null,
       githubUrl: user.githubUrl ?? null,
+      linkedinChoice: user.linkedinChoice ?? null,
+      githubChoice: user.githubChoice ?? null,
+      profileQueueNumber: user.profileQueueNumber ?? null,
+      queuedAt: user.queuedAt ?? null,
       phone: user.phone,
       year: user.year,
       branch: user.branch,

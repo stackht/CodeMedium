@@ -12,6 +12,10 @@ type Participant = {
   email: string
   linkedinUrl: string | null
   githubUrl: string | null
+  linkedinChoice: "YES" | "NO" | null
+  githubChoice: "YES" | "NO" | null
+  profileQueueNumber: number | null
+  queuedAt: string | null
   phone: string
   year: string
   branch: string
@@ -34,7 +38,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    "participants" | "approved" | "rejected" | "announce"
+    "participants" | "online" | "approved" | "rejected" | "announce"
   >("participants")
   const [participants, setParticipants] = useState<Participant[]>([])
   const [scores, setScores] = useState<Record<string, { s: string; p: string; d: string }>>({})
@@ -330,9 +334,10 @@ export default function AdminPage() {
   )
 
   const filteredRows = useMemo(() => {
-    return rows.filter((row) => {
+    const filtered = rows.filter((row) => {
       if (yearFilter !== "ALL" && row.year !== yearFilter) return false
       if (branchFilter !== "ALL" && row.branch !== branchFilter) return false
+      if (activeTab === "online" && !row.profileQueueNumber) return false
       if (activeTab === "approved" && row.reviewStatus !== "APPROVED") return false
       if (activeTab === "rejected" && row.reviewStatus !== "REJECTED") return false
       if (search.trim()) {
@@ -342,6 +347,11 @@ export default function AdminPage() {
       }
       return true
     })
+
+    if (activeTab === "online") {
+      return filtered.slice().sort((a, b) => (a.profileQueueNumber || 0) - (b.profileQueueNumber || 0))
+    }
+    return filtered
   }, [activeTab, branchFilter, rows, yearFilter, search])
 
   const countableRows = useMemo(
@@ -360,6 +370,11 @@ export default function AdminPage() {
       rows.filter(
         (row) => !demoNames.has(row.name) && row.reviewStatus === "APPROVED",
       ).length,
+    [demoNames, rows],
+  )
+
+  const onlineCount = useMemo(
+    () => rows.filter((row) => !demoNames.has(row.name) && !!row.profileQueueNumber).length,
     [demoNames, rows],
   )
 
@@ -411,6 +426,13 @@ export default function AdminPage() {
               onClick={() => setActiveTab("participants")}
             >
               Participants
+            </button>
+            <button
+              type="button"
+              className={`terminal-tab ${activeTab === "online" ? "terminal-tab-active" : ""}`}
+              onClick={() => setActiveTab("online")}
+            >
+              Online ({onlineCount})
             </button>
             <button
               type="button"
@@ -492,11 +514,11 @@ export default function AdminPage() {
             </div>
           )}
 
-          {(activeTab === "participants" || activeTab === "approved" || activeTab === "rejected") && (
+          {(activeTab === "participants" || activeTab === "online" || activeTab === "approved" || activeTab === "rejected") && (
             <div className="mt-2 overflow-auto">
               <div className="mb-4 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.28em] text-white/70">
                 <div className="mr-auto text-xs uppercase tracking-[0.28em] text-neonGreen/70">
-                  Total: {totalCount} · Done: {doneCount} · Approved: {approvedCount} · Rejected: {rejectedCount}
+                  Total: {totalCount} · Done: {doneCount} · Online: {onlineCount} · Approved: {approvedCount} · Rejected: {rejectedCount}
                 </div>
                 <input
                   type="text"
@@ -542,9 +564,16 @@ export default function AdminPage() {
                     <div className="rounded-md border border-neonGreen/30 bg-black/60 px-4 py-2 text-xs uppercase tracking-[0.28em] text-neonGreen/70">
                       {group.year} / {group.branch}
                     </div>
-                    {group.items.map((participant) => (
-                      <div key={participant.id} className="rounded-lg border border-white/10 bg-black/50 p-4">
-                        <div className="text-sm text-white/90">{participant.name}</div>
+                      {group.items.map((participant) => (
+                        <div key={participant.id} className="rounded-lg border border-white/10 bg-black/50 p-4">
+                        <div className="flex items-center gap-2 text-sm text-white/90">
+                          {participant.profileQueueNumber ? (
+                            <span className="rounded-sm border border-neonGreen/30 bg-black/70 px-2 py-1 text-[10px] uppercase tracking-[0.22em] text-neonGreen/70">
+                              #{participant.profileQueueNumber}
+                            </span>
+                          ) : null}
+                          <span>{participant.name}</span>
+                        </div>
                         <div className="mt-1 text-xs text-white/60">{participant.email}</div>
                         <div className="mt-2 flex items-center gap-3 text-xs text-white/70">
                           Profile:
@@ -708,7 +737,16 @@ export default function AdminPage() {
                       </tr>
                       {group.items.map((participant) => (
                         <tr key={participant.id} className="bg-black/40">
-                          <td className="rounded-l-md px-3 py-3">{participant.name}</td>
+                          <td className="rounded-l-md px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              {participant.profileQueueNumber ? (
+                                <span className="rounded-sm border border-neonGreen/30 bg-black/70 px-2 py-1 text-[10px] uppercase tracking-[0.22em] text-neonGreen/70">
+                                  #{participant.profileQueueNumber}
+                                </span>
+                              ) : null}
+                              <span>{participant.name}</span>
+                            </div>
+                          </td>
                           <td className="px-3 py-3">{participant.email}</td>
                           <td className="px-3 py-3">
                             <div className="flex items-center gap-3">
