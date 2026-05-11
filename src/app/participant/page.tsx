@@ -226,9 +226,6 @@ export default function ChallengesPage() {
                   <li>1 mark in Project</li>
                   <li>2 marks in Dynamic Thinking</li>
                 </ul>
-                <div className="mt-4 text-xs uppercase tracking-[0.28em] text-neonGreen/70">
-                  Dates to be announced soon
-                </div>
               </div>
               {announcements.map((item) => (
                 <div

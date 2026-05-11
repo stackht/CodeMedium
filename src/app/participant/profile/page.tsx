@@ -26,6 +26,9 @@ export default function ParticipantProfilePage() {
   const [githubUrl, setGithubUrl] = useState("")
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
+  const linkedInLocked = !!profile?.linkedinUrl
+  const githubLocked = !!profile?.githubUrl
+
   useEffect(() => {
     const token = localStorage.getItem("cmd_token")
     if (!token) {
@@ -64,8 +67,8 @@ export default function ParticipantProfilePage() {
     setSaveMessage("")
     try {
       const payload = {
-        linkedinUrl: hasLinkedIn === "yes" ? linkedInUrl : null,
-        githubUrl: hasGithub === "yes" ? githubUrl : null,
+        linkedinUrl: (linkedInLocked || hasLinkedIn === "yes") ? linkedInUrl : null,
+        githubUrl: (githubLocked || hasGithub === "yes") ? githubUrl : null,
       }
       const response = await fetch(`${apiBase}/auth/me`, {
         method: "PUT",
@@ -80,6 +83,8 @@ export default function ParticipantProfilePage() {
         throw new Error(data.message || "Failed to save profile links.")
       }
       setProfile(data.user)
+      setHasLinkedIn(data.user?.linkedinUrl ? "yes" : "no")
+      setHasGithub(data.user?.githubUrl ? "yes" : "no")
       setSaveMessage("Saved.")
     } catch (error: any) {
       setSaveMessage(error.message || "Failed to save.")
@@ -149,27 +154,30 @@ export default function ParticipantProfilePage() {
               <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">
                 LinkedIn Profile?
               </div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  onClick={() => setHasLinkedIn("yes")}
-                  className={hasLinkedIn === "yes" ? "" : "opacity-60 hover:opacity-100"}
-                >
-                  Yes
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setHasLinkedIn("no")
-                    setLinkedInUrl("")
-                  }}
-                  className={hasLinkedIn === "no" ? "" : "opacity-60 hover:opacity-100"}
-                >
-                  No
-                </Button>
-              </div>
 
-              {hasLinkedIn === "yes" && (
+              {!linkedInLocked && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => setHasLinkedIn("yes")}
+                    className={hasLinkedIn === "yes" ? "" : "opacity-60 hover:opacity-100"}
+                  >
+                    Yes
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setHasLinkedIn("no")
+                      setLinkedInUrl("")
+                    }}
+                    className={hasLinkedIn === "no" ? "" : "opacity-60 hover:opacity-100"}
+                  >
+                    No
+                  </Button>
+                </div>
+              )}
+
+              {(linkedInLocked || hasLinkedIn === "yes") && (
                 <div className="mt-4 space-y-2">
                   <div className="text-[10px] uppercase tracking-[0.28em] text-white/60">
                     Enter your LinkedIn URL
@@ -199,27 +207,30 @@ export default function ParticipantProfilePage() {
               <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">
                 GitHub Profile?
               </div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  onClick={() => setHasGithub("yes")}
-                  className={hasGithub === "yes" ? "" : "opacity-60 hover:opacity-100"}
-                >
-                  Yes
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setHasGithub("no")
-                    setGithubUrl("")
-                  }}
-                  className={hasGithub === "no" ? "" : "opacity-60 hover:opacity-100"}
-                >
-                  No
-                </Button>
-              </div>
 
-              {hasGithub === "yes" && (
+              {!githubLocked && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => setHasGithub("yes")}
+                    className={hasGithub === "yes" ? "" : "opacity-60 hover:opacity-100"}
+                  >
+                    Yes
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setHasGithub("no")
+                      setGithubUrl("")
+                    }}
+                    className={hasGithub === "no" ? "" : "opacity-60 hover:opacity-100"}
+                  >
+                    No
+                  </Button>
+                </div>
+              )}
+
+              {(githubLocked || hasGithub === "yes") && (
                 <div className="mt-4 space-y-2">
                   <div className="text-[10px] uppercase tracking-[0.28em] text-white/60">
                     Enter your GitHub URL

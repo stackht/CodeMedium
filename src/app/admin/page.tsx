@@ -89,18 +89,24 @@ export default function AdminPage() {
       })
       const data = await response.json()
       if (!response.ok) return
-      setParticipants(data.participants || [])
-      const initialScores: Record<string, { s: string; p: string; d: string }> = {}
-      for (const participant of data.participants || []) {
-        initialScores[participant.id] = {
-          s: participant.sScore?.toString() || "",
-          p: participant.pScore?.toString() || "",
-          d: participant.dScore?.toString() || "",
+      const incoming: Participant[] = data.participants || []
+      setParticipants(incoming)
+      setScores((prev) => {
+        const next = { ...prev }
+        for (const participant of incoming) {
+          if (next[participant.id]) continue
+          next[participant.id] = {
+            s: participant.sScore?.toString() || "",
+            p: participant.pScore?.toString() || "",
+            d: participant.dScore?.toString() || "",
+          }
         }
-      }
-      setScores(initialScores)
+        return next
+      })
     }
     load()
+    const interval = setInterval(load, 5000)
+    return () => clearInterval(interval)
   }, [apiBase, ready])
 
   useEffect(() => {
