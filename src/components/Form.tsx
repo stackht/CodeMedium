@@ -33,6 +33,13 @@ export default function FormSection() {
   const [message, setMessage] = useState("")
   const [showRegisterPassword, setShowRegisterPassword] = useState(false)
   const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [forgotStep, setForgotStep] = useState<"email" | "otp" | "choice" | "reset">("email")
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotOtp, setForgotOtp] = useState("")
+  const [forgotNewPassword, setForgotNewPassword] = useState("")
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotMessage, setForgotMessage] = useState("")
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const router = useRouter()
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
@@ -198,6 +205,86 @@ export default function FormSection() {
     } catch (error: any) {
       dispatch(setStatus("error"))
       setMessage(error.name === "AbortError" ? "Request timed out." : error.message || "Login failed.")
+    }
+  }
+
+  const requestForgotOtp = async () => {
+    setForgotLoading(true)
+    setForgotMessage("")
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const response = await fetch(`${apiBase}/auth/forgot/request-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Failed to send OTP.")
+      setForgotStep("otp")
+      setForgotMessage("OTP sent to your email.")
+    } catch (error: any) {
+      setForgotMessage(
+        error.name === "AbortError" ? "Request timed out." : error.message || "Something went wrong.",
+      )
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const verifyForgotOtp = async () => {
+    setForgotLoading(true)
+    setForgotMessage("")
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const response = await fetch(`${apiBase}/auth/forgot/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, otp: forgotOtp }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Invalid OTP.")
+      setForgotStep("choice")
+      setForgotMessage("Verified. We emailed your username. You can reset your password now.")
+    } catch (error: any) {
+      setForgotMessage(
+        error.name === "AbortError" ? "Request timed out." : error.message || "OTP verification failed.",
+      )
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const resetForgotPassword = async () => {
+    setForgotLoading(true)
+    setForgotMessage("")
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const response = await fetch(`${apiBase}/auth/forgot/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, otp: forgotOtp, newPassword: forgotNewPassword }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || "Password reset failed.")
+      setForgotMessage("Password updated. You can login now.")
+      setForgotStep("email")
+      setForgotOtp("")
+      setForgotNewPassword("")
+    } catch (error: any) {
+      setForgotMessage(
+        error.name === "AbortError" ? "Request timed out." : error.message || "Password reset failed.",
+      )
+    } finally {
+      setForgotLoading(false)
     }
   }
 
@@ -383,45 +470,180 @@ export default function FormSection() {
           )}
 
           {mode === "login" && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="identifier">Username or Email</Label>
-                <Input
-                  id="identifier"
-                  placeholder="$cmd_user or email"
-                  value={identifier}
-                  onChange={(event) =>
-                    dispatch(updateField({ field: "identifier", value: event.target.value }))
-                  }
-                  required
-                />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="identifier">Username or Email</Label>
+                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/80 shadow-inner shadow-black/60 focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/30">
+                    <span className="text-neonGreen/80">$</span>
+                    <input
+                      id="identifier"
+                      className="h-12 w-full bg-transparent outline-none"
+                      placeholder="cmd_user or email"
+                      value={identifier.startsWith("$") ? identifier.slice(1) : identifier}
+                      onChange={(event) => {
+                        const raw = event.target.value.trim()
+                        if (!raw) {
+                          dispatch(updateField({ field: "identifier", value: "" }))
+                          return
+                        }
+                        if (raw.includes("@")) {
+                          dispatch(updateField({ field: "identifier", value: raw }))
+                          return
+                        }
+                        dispatch(updateField({ field: "identifier", value: raw.startsWith("$") ? raw : `$${raw}` }))
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showLoginPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      className="pr-12"
+                      onChange={(event) =>
+                        dispatch(updateField({ field: "password", value: event.target.value }))
+                      }
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword((value) => !value)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                    >
+                      {showLoginPassword ? (
+                        <EyeOffIcon className="h-4 w-4" />
+                      ) : (
+                        <EyeIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="login-password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="login-password"
-                    type={showLoginPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    className="pr-12"
-                    onChange={(event) =>
-                      dispatch(updateField({ field: "password", value: event.target.value }))
-                    }
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
-                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
-                  >
-                    {showLoginPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4" />
-                    )}
-                  </button>
+
+              <div className="rounded-lg border border-white/10 bg-black/40 p-4 shadow-inner shadow-black/60">
+                <div className="text-xs uppercase tracking-[0.3em] text-neonGreen/70">
+                  Forgot Password/Username
+                </div>
+                <div className="mt-4 space-y-3">
+                  {forgotStep === "email" && (
+                    <>
+                      <Label htmlFor="forgot-email">Email</Label>
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="you@example.com"
+                      />
+                      <Button type="button" className="w-full" onClick={requestForgotOtp} disabled={forgotLoading}>
+                        {forgotLoading ? "Sending..." : "Send OTP"}
+                      </Button>
+                    </>
+                  )}
+
+                  {forgotStep === "otp" && (
+                    <>
+                      <Label htmlFor="forgot-otp">Enter OTP</Label>
+                      <Input
+                        id="forgot-otp"
+                        value={forgotOtp}
+                        onChange={(e) => setForgotOtp(e.target.value)}
+                        placeholder="6-digit OTP"
+                      />
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="button" className="flex-1" onClick={verifyForgotOtp} disabled={forgotLoading}>
+                          {forgotLoading ? "Verifying..." : "Verify OTP"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={() => {
+                            setForgotStep("email")
+                            setForgotOtp("")
+                          }}
+                          disabled={forgotLoading}
+                        >
+                          Back
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {forgotStep === "choice" && (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.28em] text-white/70">
+                        Use same password, or update?
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={() => {
+                            setForgotStep("email")
+                            setForgotOtp("")
+                            setForgotNewPassword("")
+                          }}
+                          disabled={forgotLoading}
+                        >
+                          Use Same
+                        </Button>
+                        <Button type="button" className="flex-1" onClick={() => setForgotStep("reset")} disabled={forgotLoading}>
+                          Update Password
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {forgotStep === "reset" && (
+                    <>
+                      <Label htmlFor="forgot-new-password">New Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="forgot-new-password"
+                          type={showForgotPassword ? "text" : "password"}
+                          value={forgotNewPassword}
+                          onChange={(e) => setForgotNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="pr-12"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                          aria-label={showForgotPassword ? "Hide password" : "Show password"}
+                        >
+                          {showForgotPassword ? (
+                            <EyeOffIcon className="h-4 w-4" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Button type="button" className="flex-1" onClick={resetForgotPassword} disabled={forgotLoading}>
+                          {forgotLoading ? "Updating..." : "Update Password"}
+                        </Button>
+                        <Button type="button" variant="ghost" className="flex-1" onClick={() => setForgotStep("choice")} disabled={forgotLoading}>
+                          Back
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {forgotMessage && (
+                    <div className="text-xs uppercase tracking-[0.28em] text-neonGreen/80">
+                      {forgotMessage}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -528,12 +750,3 @@ export default function FormSection() {
     </section>
   )
 }
-
-
-
-
-
-
-
-
-

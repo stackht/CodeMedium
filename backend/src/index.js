@@ -116,6 +116,21 @@ const announcementSchema = z.object({
   content: z.string().min(5).max(4000),
 })
 
+const forgotRequestSchema = z.object({
+  email: z.string().email(),
+})
+
+const forgotVerifySchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(4).max(8),
+})
+
+const forgotResetSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(4).max(8),
+  newPassword: z.string().min(6).max(128),
+})
+
 const optionalUrlSchema = z.preprocess(
   (value) => {
     if (value === null || value === undefined) return null
@@ -563,9 +578,15 @@ app.post("/auth/register", async (req, res) => {
 app.post("/auth/login", async (req, res) => {
   try {
     const data = loginSchema.parse(req.body)
+    const normalizedIdentifier = (() => {
+      const raw = data.identifier.trim()
+      if (!raw) return raw
+      if (raw.includes("@")) return raw
+      return raw.startsWith("$") ? raw : `$${raw}`
+    })()
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: data.identifier }, { username: data.identifier }],
+        OR: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
       },
     })
     if (!user) {
@@ -631,6 +652,139 @@ app.get("/auth/me", authRequired, async (req, res) => {
     }
 
     return res.json({ ok: true, user: { ...user, queuePosition } })
+  } catch (error) {
+    return res.status(400).json({ ok: false, message: error.message })
+  }
+})
+
+app.post("/auth/forgot/request-otp", async (req, res) => {
+  try {
+    const data = forgotRequestSchema.parse(req.body)
+    const email = data.email.toLowerCase().trim()
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    // Do not leak whether the email exists.
+    if (!user) {
+      return res.json({ ok: true })
+    }
+
+    const now = new Date()
+    const cooldownSince = new Date(Date.now() - OTP_COOLDOWN_SECONDS * 1000)
+    const recent = await prisma.passwordResetToken.findFirst({
+      where: { email, createdAt: { gt: cooldownSince } },
+      orderBy: { createdAt: "desc" },
+    })
+    if (recent) {
+      return res.status(429).json({ ok: false, message: "Please wait before requesting another OTP." })
+    }
+
+    const otp = generateOtp()
+    const otpHash = await bcrypt.hash(otp, 10)
+    const expiresAt = nowPlusMinutes(OTP_TTL_MINUTES)
+
+    await prisma.passwordResetToken.create({
+      data: {
+        email,
+        otpHash,
+        expiresAt,
+      },
+    })
+
+    await sendMail({
+      to: email,
+      subject: "Code Medium — Password Reset OTP",
+      text: `Your OTP is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes.`,
+      html: `<p>Your OTP is <b>${otp}</b>.</p><p>It expires in ${OTP_TTL_MINUTES} minutes.</p>`,
+    })
+
+    return res.json({ ok: true })
+  } catch (error) {
+    return res.status(400).json({ ok: false, message: error.message })
+  }
+})
+
+app.post("/auth/forgot/verify-otp", async (req, res) => {
+  try {
+    const data = forgotVerifySchema.parse(req.body)
+    const email = data.email.toLowerCase().trim()
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    // Do not leak whether the email exists.
+    if (!user) {
+      return res.json({ ok: true })
+    }
+
+    const token = await prisma.passwordResetToken.findFirst({
+      where: { email, consumedAt: null },
+      orderBy: { createdAt: "desc" },
+    })
+    if (!token) {
+      return res.status(400).json({ ok: false, message: "OTP expired or invalid." })
+    }
+    if (token.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ ok: false, message: "OTP expired." })
+    }
+    const valid = await bcrypt.compare(data.otp, token.otpHash)
+    if (!valid) {
+      return res.status(400).json({ ok: false, message: "Invalid OTP." })
+    }
+
+    await prisma.passwordResetToken.update({
+      where: { id: token.id },
+      data: { verifiedAt: new Date() },
+    })
+
+    // Email username; password cannot be recovered (stored as hash).
+    await sendMail({
+      to: email,
+      subject: "Code Medium — Account Details",
+      text: `Your username is ${user.username}.\n\nFor security, we cannot send your current password. If you forgot it, reset it from the app.`,
+      html: `<p>Your username is <b>${user.username}</b>.</p><p>For security, we cannot send your current password (it is not stored in plain text). If you forgot it, reset it from the app.</p>`,
+    })
+
+    return res.json({ ok: true, username: user.username })
+  } catch (error) {
+    return res.status(400).json({ ok: false, message: error.message })
+  }
+})
+
+app.post("/auth/forgot/reset-password", async (req, res) => {
+  try {
+    const data = forgotResetSchema.parse(req.body)
+    const email = data.email.toLowerCase().trim()
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    // Do not leak whether the email exists.
+    if (!user) {
+      return res.json({ ok: true })
+    }
+
+    const token = await prisma.passwordResetToken.findFirst({
+      where: { email, consumedAt: null },
+      orderBy: { createdAt: "desc" },
+    })
+    if (!token || !token.verifiedAt) {
+      return res.status(400).json({ ok: false, message: "OTP not verified." })
+    }
+    if (token.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ ok: false, message: "OTP expired." })
+    }
+    const valid = await bcrypt.compare(data.otp, token.otpHash)
+    if (!valid) {
+      return res.status(400).json({ ok: false, message: "Invalid OTP." })
+    }
+
+    const passwordHash = await bcrypt.hash(data.newPassword, 10)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    })
+    await prisma.passwordResetToken.update({
+      where: { id: token.id },
+      data: { consumedAt: new Date() },
+    })
+
+    return res.json({ ok: true })
   } catch (error) {
     return res.status(400).json({ ok: false, message: error.message })
   }

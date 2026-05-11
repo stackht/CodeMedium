@@ -22,6 +22,18 @@ model ProfileQueueEvent {
   @@index([userId, createdAt])
 }
 
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  email      String
+  otpHash    String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  consumedAt DateTime?
+
+  @@index([email, createdAt])
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
