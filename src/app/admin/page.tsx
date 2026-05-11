@@ -10,6 +10,8 @@ type Participant = {
   id: string
   name: string
   email: string
+  linkedinUrl: string | null
+  githubUrl: string | null
   phone: string
   year: string
   branch: string
@@ -48,6 +50,24 @@ export default function AdminPage() {
   const demoNames = useMemo(
     () => new Set(["Hemant Thakur", "Nihal Mishra", "Vedh Pokharkar"]),
     [],
+  )
+
+  const LinkedInIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5ZM.5 23.5h4V7.98h-4V23.5ZM8.5 7.98h3.84v2.12h.05c.53-1 1.83-2.06 3.77-2.06 4.03 0 4.77 2.65 4.77 6.09v9.37h-4v-8.31c0-1.98-.03-4.52-2.75-4.52-2.75 0-3.17 2.15-3.17 4.38v8.45h-4V7.98Z"
+      />
+    </svg>
+  )
+
+  const GitHubIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 .5C5.65.5.5 5.82.5 12.4c0 5.26 3.44 9.72 8.2 11.29.6.12.82-.27.82-.6v-2.1c-3.33.75-4.03-1.65-4.03-1.65-.55-1.44-1.34-1.83-1.34-1.83-1.1-.77.08-.76.08-.76 1.22.09 1.86 1.3 1.86 1.3 1.08 1.91 2.83 1.36 3.52 1.04.11-.82.42-1.36.76-1.67-2.66-.31-5.46-1.38-5.46-6.14 0-1.36.46-2.48 1.23-3.35-.12-.31-.53-1.55.12-3.23 0 0 1.01-.33 3.3 1.28.96-.27 1.99-.4 3.01-.4 1.02 0 2.05.14 3.01.4 2.29-1.61 3.3-1.28 3.3-1.28.65 1.68.24 2.92.12 3.23.76.87 1.23 1.99 1.23 3.35 0 4.77-2.81 5.83-5.49 6.14.43.38.82 1.14.82 2.29v3.39c0 .33.22.73.83.6 4.75-1.57 8.18-6.03 8.18-11.29C23.5 5.82 18.35.5 12 .5Z"
+      />
+    </svg>
   )
 
   useEffect(() => {
@@ -520,6 +540,39 @@ export default function AdminPage() {
                       <div key={participant.id} className="rounded-lg border border-white/10 bg-black/50 p-4">
                         <div className="text-sm text-white/90">{participant.name}</div>
                         <div className="mt-1 text-xs text-white/60">{participant.email}</div>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-white/70">
+                          Profile:
+                          {participant.linkedinUrl ? (
+                            <a
+                              href={participant.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-neonBlue/80 hover:text-neonGreen"
+                              aria-label="Open LinkedIn"
+                            >
+                              <LinkedInIcon className="h-4 w-4" />
+                            </a>
+                          ) : (
+                            <span className="text-white/20" aria-hidden="true">
+                              <LinkedInIcon className="h-4 w-4" />
+                            </span>
+                          )}
+                          {participant.githubUrl ? (
+                            <a
+                              href={participant.githubUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-neonBlue/80 hover:text-neonGreen"
+                              aria-label="Open GitHub"
+                            >
+                              <GitHubIcon className="h-4 w-4" />
+                            </a>
+                          ) : (
+                            <span className="text-white/20" aria-hidden="true">
+                              <GitHubIcon className="h-4 w-4" />
+                            </span>
+                          )}
+                        </div>
                         <div className="mt-1 text-xs text-white/60">{participant.phone}</div>
                         <div className="mt-2 text-xs text-neonGreen/70">
                           {participant.year} / {participant.branch}
@@ -624,6 +677,7 @@ export default function AdminPage() {
                   <tr>
                     <th className="py-2 pr-4">Name</th>
                     <th className="py-2 pr-4">Email</th>
+                    <th className="py-2 pr-4">Profile</th>
                     <th className="py-2 pr-4">Phone</th>
                     <th className="py-2 pr-4">Year</th>
                     <th className="py-2 pr-4">Branch</th>
@@ -642,7 +696,7 @@ export default function AdminPage() {
                   {groupedRows.map((group) => (
                     <Fragment key={`${group.year}-${group.branch}`}>
                       <tr className="bg-black/60">
-                        <td colSpan={14} className="rounded-md px-3 py-2 text-xs uppercase tracking-[0.28em] text-neonGreen/70">
+                        <td colSpan={15} className="rounded-md px-3 py-2 text-xs uppercase tracking-[0.28em] text-neonGreen/70">
                           {group.year} / {group.branch}
                         </td>
                       </tr>
@@ -650,6 +704,40 @@ export default function AdminPage() {
                         <tr key={participant.id} className="bg-black/40">
                           <td className="rounded-l-md px-3 py-3">{participant.name}</td>
                           <td className="px-3 py-3">{participant.email}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-3">
+                              {participant.linkedinUrl ? (
+                                <a
+                                  href={participant.linkedinUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-neonBlue/80 hover:text-neonGreen"
+                                  aria-label="Open LinkedIn"
+                                >
+                                  <LinkedInIcon className="h-5 w-5" />
+                                </a>
+                              ) : (
+                                <span className="text-white/20" aria-hidden="true">
+                                  <LinkedInIcon className="h-5 w-5" />
+                                </span>
+                              )}
+                              {participant.githubUrl ? (
+                                <a
+                                  href={participant.githubUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-neonBlue/80 hover:text-neonGreen"
+                                  aria-label="Open GitHub"
+                                >
+                                  <GitHubIcon className="h-5 w-5" />
+                                </a>
+                              ) : (
+                                <span className="text-white/20" aria-hidden="true">
+                                  <GitHubIcon className="h-5 w-5" />
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-3 py-3">{participant.phone}</td>
                           <td className="px-3 py-3">{participant.year}</td>
                           <td className="px-3 py-3">{participant.branch}</td>
@@ -750,7 +838,7 @@ export default function AdminPage() {
                   ))}
                   {groupedRows.length === 0 && (
                     <tr>
-                      <td colSpan={14} className="px-3 py-6 text-center text-white/50">
+                      <td colSpan={15} className="px-3 py-6 text-center text-white/50">
                         No participants yet.
                       </td>
                     </tr>

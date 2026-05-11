@@ -695,6 +695,8 @@ app.get("/admin/participants", adminRequired, async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      linkedinUrl: user.linkedinUrl ?? null,
+      githubUrl: user.githubUrl ?? null,
       phone: user.phone,
       year: user.year,
       branch: user.branch,
