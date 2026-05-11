@@ -692,10 +692,11 @@ app.put("/auth/me", authRequired, async (req, res) => {
       // - First time completing both choices => assign queue number
       // - Any later edit to either URL/choice => assign a NEW queue number (moves user later in order)
       if (isComplete && (before.profileQueueNumber === null || changed)) {
-        await tx.$executeRawUnsafe(
-          `UPDATE "User" SET "profileQueueNumber" = nextval('profile_queue_seq'), "queuedAt" = now() WHERE id = $1;`,
-          userId,
-        )
+        const event = await tx.profileQueueEvent.create({ data: { userId } })
+        await tx.user.update({
+          where: { id: userId },
+          data: { profileQueueNumber: event.id, queuedAt: event.createdAt },
+        })
       }
 
       return tx.user.findUnique({

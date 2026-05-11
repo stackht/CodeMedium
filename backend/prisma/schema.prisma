@@ -12,6 +12,16 @@ enum ProfileChoice {
   NO
 }
 
+model ProfileQueueEvent {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -35,6 +45,7 @@ model User {
   createdAt    DateTime @default(now())
   challenges   UserChallenge[]
   uploads      ChallengeUpload[]
+  queueEvents  ProfileQueueEvent[]
 }
 
 model OtpToken {
