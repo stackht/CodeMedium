@@ -6,8 +6,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma db push --skip-generate",
-    "prisma:sync": "prisma db push --skip-generate"
+    "prisma:migrate": "prisma db push --skip-generate --accept-data-loss",
+    "prisma:sync": "prisma db push --skip-generate --accept-data-loss"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
