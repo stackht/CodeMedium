@@ -304,29 +304,32 @@ export default function FormSection() {
           Participation Form
         </motion.h2>
 
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          onSubmit={(event) => {
-            event.preventDefault()
-            if (status === "loading") return
-            if (mode === "login") {
-              submitLogin()
-              return
-            }
-            if (step === "details") {
-              submitDetails()
-            } else if (step === "otp") {
-              submitOtp()
-            } else if (step === "credentials") {
-              submitCredentials()
-            }
-          }}
-          className="glass-panel relative z-[9999] mt-10 max-w-3xl space-y-6 rounded-3xl p-5 sm:p-8"
+        <div
+          className={`relative z-[9999] mt-10 grid gap-6 ${mode === "login" ? "lg:grid-cols-2" : ""}`}
         >
-          <div className="terminal-tabs inline-flex flex-wrap items-center gap-3">
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (status === "loading") return
+              if (mode === "login") {
+                submitLogin()
+                return
+              }
+              if (step === "details") {
+                submitDetails()
+              } else if (step === "otp") {
+                submitOtp()
+              } else if (step === "credentials") {
+                submitCredentials()
+              }
+            }}
+            className="glass-panel relative space-y-6 rounded-3xl p-5 sm:p-8"
+          >
+            <div className="terminal-tabs inline-flex flex-wrap items-center gap-3">
             <button
               type="button"
               className={`terminal-tab ${mode === "register" ? "terminal-tab-active" : ""}`}
@@ -470,180 +473,58 @@ export default function FormSection() {
           )}
 
           {mode === "login" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="identifier">Username or Email</Label>
-                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/80 shadow-inner shadow-black/60 focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/30">
-                    <span className="text-neonGreen/80">$</span>
-                    <input
-                      id="identifier"
-                      className="h-12 w-full bg-transparent outline-none"
-                      placeholder="cmd_user or email"
-                      value={identifier.startsWith("$") ? identifier.slice(1) : identifier}
-                      onChange={(event) => {
-                        const raw = event.target.value.trim()
-                        if (!raw) {
-                          dispatch(updateField({ field: "identifier", value: "" }))
-                          return
-                        }
-                        if (raw.includes("@")) {
-                          dispatch(updateField({ field: "identifier", value: raw }))
-                          return
-                        }
-                        dispatch(updateField({ field: "identifier", value: raw.startsWith("$") ? raw : `$${raw}` }))
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="login-password"
-                      type={showLoginPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      className="pr-12"
-                      onChange={(event) =>
-                        dispatch(updateField({ field: "password", value: event.target.value }))
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="identifier">Username or Email</Label>
+                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/80 shadow-inner shadow-black/60 focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/30">
+                  <span className="text-neonGreen/80">$</span>
+                  <input
+                    id="identifier"
+                    className="h-12 w-full bg-transparent outline-none"
+                    placeholder="cmd_user or email"
+                    value={identifier.startsWith("$") ? identifier.slice(1) : identifier}
+                    onChange={(event) => {
+                      const raw = event.target.value.trim()
+                      if (!raw) {
+                        dispatch(updateField({ field: "identifier", value: "" }))
+                        return
                       }
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword((value) => !value)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
-                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
-                    >
-                      {showLoginPassword ? (
-                        <EyeOffIcon className="h-4 w-4" />
-                      ) : (
-                        <EyeIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                      if (raw.includes("@")) {
+                        dispatch(updateField({ field: "identifier", value: raw }))
+                        return
+                      }
+                      dispatch(updateField({ field: "identifier", value: `$${raw.replace(/^\$/, "")}` }))
+                    }}
+                    required
+                  />
                 </div>
               </div>
-
-              <div className="rounded-lg border border-white/10 bg-black/40 p-4 shadow-inner shadow-black/60">
-                <div className="text-xs uppercase tracking-[0.3em] text-neonGreen/70">
-                  Forgot Password/Username
-                </div>
-                <div className="mt-4 space-y-3">
-                  {forgotStep === "email" && (
-                    <>
-                      <Label htmlFor="forgot-email">Email</Label>
-                      <Input
-                        id="forgot-email"
-                        type="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        placeholder="you@example.com"
-                      />
-                      <Button type="button" className="w-full" onClick={requestForgotOtp} disabled={forgotLoading}>
-                        {forgotLoading ? "Sending..." : "Send OTP"}
-                      </Button>
-                    </>
-                  )}
-
-                  {forgotStep === "otp" && (
-                    <>
-                      <Label htmlFor="forgot-otp">Enter OTP</Label>
-                      <Input
-                        id="forgot-otp"
-                        value={forgotOtp}
-                        onChange={(e) => setForgotOtp(e.target.value)}
-                        placeholder="6-digit OTP"
-                      />
-                      <div className="flex flex-wrap gap-3">
-                        <Button type="button" className="flex-1" onClick={verifyForgotOtp} disabled={forgotLoading}>
-                          {forgotLoading ? "Verifying..." : "Verify OTP"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="flex-1"
-                          onClick={() => {
-                            setForgotStep("email")
-                            setForgotOtp("")
-                          }}
-                          disabled={forgotLoading}
-                        >
-                          Back
-                        </Button>
-                      </div>
-                    </>
-                  )}
-
-                  {forgotStep === "choice" && (
-                    <>
-                      <div className="text-xs uppercase tracking-[0.28em] text-white/70">
-                        Use same password, or update?
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="flex-1"
-                          onClick={() => {
-                            setForgotStep("email")
-                            setForgotOtp("")
-                            setForgotNewPassword("")
-                          }}
-                          disabled={forgotLoading}
-                        >
-                          Use Same
-                        </Button>
-                        <Button type="button" className="flex-1" onClick={() => setForgotStep("reset")} disabled={forgotLoading}>
-                          Update Password
-                        </Button>
-                      </div>
-                    </>
-                  )}
-
-                  {forgotStep === "reset" && (
-                    <>
-                      <Label htmlFor="forgot-new-password">New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="forgot-new-password"
-                          type={showForgotPassword ? "text" : "password"}
-                          value={forgotNewPassword}
-                          onChange={(e) => setForgotNewPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className="pr-12"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowForgotPassword((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
-                          aria-label={showForgotPassword ? "Hide password" : "Show password"}
-                        >
-                          {showForgotPassword ? (
-                            <EyeOffIcon className="h-4 w-4" />
-                          ) : (
-                            <EyeIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <Button type="button" className="flex-1" onClick={resetForgotPassword} disabled={forgotLoading}>
-                          {forgotLoading ? "Updating..." : "Update Password"}
-                        </Button>
-                        <Button type="button" variant="ghost" className="flex-1" onClick={() => setForgotStep("choice")} disabled={forgotLoading}>
-                          Back
-                        </Button>
-                      </div>
-                    </>
-                  )}
-
-                  {forgotMessage && (
-                    <div className="text-xs uppercase tracking-[0.28em] text-neonGreen/80">
-                      {forgotMessage}
-                    </div>
-                  )}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="login-password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showLoginPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    className="pr-12"
+                    onChange={(event) =>
+                      dispatch(updateField({ field: "password", value: event.target.value }))
+                    }
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    {showLoginPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -744,7 +625,130 @@ export default function FormSection() {
               {status === "idle" && (message || "Secure, encrypted channel.")}
             </div>
           </div>
-        </motion.form>
+          </motion.form>
+
+          {mode === "login" && (
+            <div className="glass-panel space-y-4 rounded-3xl p-5 sm:p-8">
+              <div className="text-xs uppercase tracking-[0.3em] text-neonGreen/70">
+                Forgot Password/Username
+              </div>
+              <div className="space-y-3">
+                {forgotStep === "email" && (
+                  <>
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@example.com"
+                    />
+                    <Button type="button" className="w-full" onClick={requestForgotOtp} disabled={forgotLoading}>
+                      {forgotLoading ? "Sending..." : "Send OTP"}
+                    </Button>
+                  </>
+                )}
+
+                {forgotStep === "otp" && (
+                  <>
+                    <Label htmlFor="forgot-otp">Enter OTP</Label>
+                    <Input
+                      id="forgot-otp"
+                      value={forgotOtp}
+                      onChange={(e) => setForgotOtp(e.target.value)}
+                      placeholder="6-digit OTP"
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="button" className="flex-1" onClick={verifyForgotOtp} disabled={forgotLoading}>
+                        {forgotLoading ? "Verifying..." : "Verify OTP"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => {
+                          setForgotStep("email")
+                          setForgotOtp("")
+                        }}
+                        disabled={forgotLoading}
+                      >
+                        Back
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {forgotStep === "choice" && (
+                  <>
+                    <div className="text-xs uppercase tracking-[0.28em] text-white/70">
+                      Use same password, or update?
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="flex-1"
+                        onClick={() => {
+                          setForgotStep("email")
+                          setForgotOtp("")
+                          setForgotNewPassword("")
+                        }}
+                        disabled={forgotLoading}
+                      >
+                        Use Same
+                      </Button>
+                      <Button type="button" className="flex-1" onClick={() => setForgotStep("reset")} disabled={forgotLoading}>
+                        Update Password
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {forgotStep === "reset" && (
+                  <>
+                    <Label htmlFor="forgot-new-password">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="forgot-new-password"
+                        type={showForgotPassword ? "text" : "password"}
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                        aria-label={showForgotPassword ? "Hide password" : "Show password"}
+                      >
+                        {showForgotPassword ? (
+                          <EyeOffIcon className="h-4 w-4" />
+                        ) : (
+                          <EyeIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="button" className="flex-1" onClick={resetForgotPassword} disabled={forgotLoading}>
+                        {forgotLoading ? "Updating..." : "Update Password"}
+                      </Button>
+                      <Button type="button" variant="ghost" className="flex-1" onClick={() => setForgotStep("choice")} disabled={forgotLoading}>
+                        Back
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {forgotMessage && (
+                  <div className="text-xs uppercase tracking-[0.28em] text-neonGreen/80">
+                    {forgotMessage}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
     </section>
