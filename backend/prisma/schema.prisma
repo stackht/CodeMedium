@@ -16,6 +16,8 @@ model User {
   phone        String
   year         String
   branch       String
+  linkedinUrl  String?
+  githubUrl    String?
   sScore       Int?
   pScore       Int?
   dScore       Int?

@@ -116,6 +116,21 @@ const announcementSchema = z.object({
   content: z.string().min(5).max(4000),
 })
 
+const optionalUrlSchema = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return null
+    if (typeof value !== "string") return value
+    const trimmed = value.trim()
+    return trimmed ? trimmed : null
+  },
+  z.string().url().nullable(),
+)
+
+const updateProfileSchema = z.object({
+  linkedinUrl: optionalUrlSchema.optional(),
+  githubUrl: optionalUrlSchema.optional(),
+})
+
 function authRequired(req, res, next) {
   const header = req.headers.authorization || ""
   const token = header.startsWith("Bearer ") ? header.slice(7) : null
@@ -581,6 +596,8 @@ app.get("/auth/me", authRequired, async (req, res) => {
         phone: true,
         year: true,
         branch: true,
+        linkedinUrl: true,
+        githubUrl: true,
         createdAt: true,
       },
     })
@@ -588,6 +605,34 @@ app.get("/auth/me", authRequired, async (req, res) => {
       return res.status(404).json({ ok: false, message: "User not found." })
     }
     return res.json({ ok: true, user })
+  } catch (error) {
+    return res.status(400).json({ ok: false, message: error.message })
+  }
+})
+
+app.put("/auth/me", authRequired, async (req, res) => {
+  try {
+    const data = updateProfileSchema.parse(req.body)
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data: {
+        ...(data.linkedinUrl !== undefined ? { linkedinUrl: data.linkedinUrl } : {}),
+        ...(data.githubUrl !== undefined ? { githubUrl: data.githubUrl } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        phone: true,
+        year: true,
+        branch: true,
+        linkedinUrl: true,
+        githubUrl: true,
+        createdAt: true,
+      },
+    })
+    return res.json({ ok: true, user: updated })
   } catch (error) {
     return res.status(400).json({ ok: false, message: error.message })
   }
