@@ -31,8 +31,44 @@ export default function FormSection() {
   const [mode, setMode] = useState<"register" | "login">("register")
   const [step, setStep] = useState<"details" | "otp" | "credentials" | "done">("details")
   const [message, setMessage] = useState("")
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
   const router = useRouter()
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+
+  const EyeIcon = ({ className }: { className?: string }) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+
+  const EyeOffIcon = ({ className }: { className?: string }) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+      <path d="M9.9 4.2A10.1 10.1 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-4.3 5.2" />
+      <path d="M6.6 6.6A17.2 17.2 0 0 0 2 12s3.5 7 10 7c1.6 0 3-.3 4.2-.8" />
+      <path d="M2 2l20 20" />
+    </svg>
+  )
 
   useEffect(() => {
     if (status === "success" && buttonRef.current) {
@@ -362,16 +398,31 @@ export default function FormSection() {
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(event) =>
-                    dispatch(updateField({ field: "password", value: event.target.value }))
-                  }
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showLoginPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    className="pr-12"
+                    onChange={(event) =>
+                      dispatch(updateField({ field: "password", value: event.target.value }))
+                    }
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    {showLoginPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -412,16 +463,31 @@ export default function FormSection() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Create Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(event) =>
-                    dispatch(updateField({ field: "password", value: event.target.value }))
-                  }
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showRegisterPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    className="pr-12"
+                    onChange={(event) =>
+                      dispatch(updateField({ field: "password", value: event.target.value }))
+                    }
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                    aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                  >
+                    {showRegisterPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

@@ -24,6 +24,28 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 The frontend talks to a separate API service for OTP + account creation. The backend lives in `backend/`.
 
+### Cloning the Railway database (move to new account)
+This project uses Postgres (see `backend/prisma/schema.prisma`). To move *all data as-is* to a new Railway account:
+
+1. Pause writes (temporarily stop the old backend service or enable maintenance mode).
+2. Create a new Postgres service in the new Railway account and copy its `DATABASE_URL`.
+3. Preferred (fastest): use PostgreSQL client tools locally (`pg_dump`, `pg_restore`, optional `psql`).
+4. From `backend/`, run:
+
+```powershell
+$env:OLD_DATABASE_URL="postgresql://..."
+$env:NEW_DATABASE_URL="postgresql://..."
+./scripts/clone-railway-postgres.ps1
+```
+
+If you *don’t* have `pg_dump` available, there is a Prisma-based cloner (slower, but works anywhere Prisma runs):
+
+```powershell
+$env:OLD_DATABASE_URL="postgresql://..."
+$env:NEW_DATABASE_URL="postgresql://..."
+node ./scripts/clone-railway-postgres-prisma.js
+```
+
 ### Backend setup
 1. Create a Postgres database in Railway and copy the `DATABASE_URL`.
 2. Set env vars for the backend (see `backend/.env.example`).
