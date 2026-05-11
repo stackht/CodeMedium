@@ -131,6 +131,11 @@ const updateProfileSchema = z.object({
   githubChoice: z.enum(["YES", "NO"]).nullable().optional(),
   linkedinUrl: optionalUrlSchema.optional(),
   githubUrl: optionalUrlSchema.optional(),
+  name: z.string().min(2).max(80).optional(),
+  phone: z.string().min(6).optional(),
+  year: z.enum(["FE", "SE", "TE", "BE"]).optional(),
+  branch: z.enum(["AI&DS", "AIML", "IOT", "COMP", "MECH", "ELECT"]).optional(),
+  username: z.string().min(2).max(25).optional(),
 })
 
 function authRequired(req, res, next) {
@@ -610,7 +615,22 @@ app.get("/auth/me", authRequired, async (req, res) => {
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found." })
     }
-    return res.json({ ok: true, user })
+
+    let queuePosition = null
+    if (user.queuedAt) {
+      const positionRows = await prisma.$queryRawUnsafe(
+        `SELECT "queuePosition" FROM (
+           SELECT id, row_number() OVER (ORDER BY "queuedAt" ASC, "profileQueueNumber" ASC, "createdAt" ASC) AS "queuePosition"
+           FROM "User"
+           WHERE "queuedAt" IS NOT NULL
+         ) q
+         WHERE q.id = $1;`,
+        req.userId,
+      )
+      queuePosition = positionRows?.[0]?.queuePosition ? Number(positionRows[0].queuePosition) : null
+    }
+
+    return res.json({ ok: true, user: { ...user, queuePosition } })
   } catch (error) {
     return res.status(400).json({ ok: false, message: error.message })
   }
@@ -639,6 +659,16 @@ app.put("/auth/me", authRequired, async (req, res) => {
     if (data.githubChoice === "YES" && !nextData.githubUrl) {
       throw new Error("GitHub URL is required when selecting Yes.")
     }
+
+    if (data.username !== undefined) {
+      const raw = data.username.trim()
+      if (!raw) throw new Error("Username is required.")
+      nextData.username = raw.startsWith("$") ? raw : `$${raw}`
+    }
+    if (data.name !== undefined) nextData.name = data.name.trim()
+    if (data.phone !== undefined) nextData.phone = data.phone.trim()
+    if (data.year !== undefined) nextData.year = data.year
+    if (data.branch !== undefined) nextData.branch = data.branch
 
     const updated = await prisma.$transaction(async (tx) => {
       const before = await tx.user.findUnique({
@@ -672,6 +702,8 @@ app.put("/auth/me", authRequired, async (req, res) => {
           githubChoice: true,
           profileQueueNumber: true,
           queuedAt: true,
+          year: true,
+          branch: true,
           createdAt: true,
         },
       })
@@ -720,7 +752,21 @@ app.put("/auth/me", authRequired, async (req, res) => {
       })
     })
 
-    return res.json({ ok: true, user: updated })
+    let queuePosition = null
+    if (updated?.queuedAt) {
+      const positionRows = await prisma.$queryRawUnsafe(
+        `SELECT "queuePosition" FROM (
+           SELECT id, row_number() OVER (ORDER BY "queuedAt" ASC, "profileQueueNumber" ASC, "createdAt" ASC) AS "queuePosition"
+           FROM "User"
+           WHERE "queuedAt" IS NOT NULL
+         ) q
+         WHERE q.id = $1;`,
+        userId,
+      )
+      queuePosition = positionRows?.[0]?.queuePosition ? Number(positionRows[0].queuePosition) : null
+    }
+
+    return res.json({ ok: true, user: updated ? { ...updated, queuePosition } : updated })
   } catch (error) {
     return res.status(400).json({ ok: false, message: error.message })
   }

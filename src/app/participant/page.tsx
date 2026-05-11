@@ -26,6 +26,7 @@ export default function ChallengesPage() {
   const [message, setMessage] = useState("")
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"shell" | "accepted" | "announcement">("shell")
+  const [queueNumber, setQueueNumber] = useState<number | null>(null)
   const [activeChallenge, setActiveChallenge] = useState<{
     id: string
     statementId: number
@@ -57,6 +58,23 @@ export default function ChallengesPage() {
       }
     }
     load()
+  }, [apiBase])
+
+  useEffect(() => {
+    const token = localStorage.getItem("cmd_token")
+    if (!token) return
+    const load = async () => {
+      const response = await fetch(`${apiBase}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setQueueNumber(data.user?.queuePosition ?? null)
+      }
+    }
+    load()
+    const interval = setInterval(load, 5000)
+    return () => clearInterval(interval)
   }, [apiBase])
 
   useEffect(() => {
@@ -157,6 +175,9 @@ export default function ChallengesPage() {
           <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-3 px-4 text-center sm:px-6">
             <div className="terminal-title terminal-title-plain w-full min-w-0 truncate whitespace-nowrap font-orbitron text-xl text-neonGreen sm:text-2xl md:text-3xl">
               Cmd User Shell
+            </div>
+            <div className="w-full text-xs uppercase tracking-[0.28em] text-neonGreen/80">
+              Queue Number: {queueNumber ? `#${queueNumber}` : "—"}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               <Button type="button" variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto">

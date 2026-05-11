@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
@@ -22,17 +22,67 @@ export default function ParticipantProfilePage() {
     linkedinChoice?: "YES" | "NO" | null
     githubChoice?: "YES" | "NO" | null
     profileQueueNumber?: number | null
+    queuePosition?: number | null
   } | null>(null)
   const [hasLinkedIn, setHasLinkedIn] = useState<"yes" | "no" | "unset">("unset")
   const [linkedInUrl, setLinkedInUrl] = useState("")
   const [hasGithub, setHasGithub] = useState<"yes" | "no" | "unset">("unset")
   const [githubUrl, setGithubUrl] = useState("")
+  const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
+  const [phone, setPhone] = useState("")
+  const [year, setYear] = useState("")
+  const [branch, setBranch] = useState("")
+  const saveTimerRef = useRef<number | null>(null)
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
   const linkedInLocked = !!profile?.linkedinUrl
   const githubLocked = !!profile?.githubUrl
   const linkedInNoSelected = profile?.linkedinChoice === "NO" && !profile?.linkedinUrl
   const githubNoSelected = profile?.githubChoice === "NO" && !profile?.githubUrl
+
+  const savePatch = async (patch: Record<string, unknown>, options?: { debounceMs?: number }) => {
+    const token = localStorage.getItem("cmd_token")
+    if (!token) return
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+
+    const run = async () => {
+      setSaving(true)
+      setSaveMessage("")
+      try {
+        const response = await fetch(`${apiBase}/auth/me`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(patch),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to save profile.")
+        }
+        setProfile(data.user)
+        setSaveMessage("Saved.")
+      } catch (error: any) {
+        setSaveMessage(error.message || "Failed to save.")
+      } finally {
+        setSaving(false)
+      }
+    }
+
+    const debounceMs = options?.debounceMs ?? 0
+    if (debounceMs > 0) {
+      saveTimerRef.current = window.setTimeout(run, debounceMs)
+      return
+    }
+
+    await run()
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("cmd_token")
@@ -60,6 +110,11 @@ export default function ParticipantProfilePage() {
         setLinkedInUrl(li || "")
         setHasGithub(gh ? "yes" : (data.user?.githubChoice === "NO" ? "no" : "unset"))
         setGithubUrl(gh || "")
+        setName(data.user?.name || "")
+        setUsername(data.user?.username || "")
+        setPhone(data.user?.phone || "")
+        setYear(data.user?.year || "")
+        setBranch(data.user?.branch || "")
       }
     }
     load()
@@ -153,27 +208,105 @@ export default function ParticipantProfilePage() {
           <div className="text-xs uppercase tracking-[0.35em] text-white/70">
             Participant Profile
           </div>
+          <div className="mt-3 text-xs uppercase tracking-[0.28em] text-neonGreen/80">
+            Queue Number: {profile?.queuePosition ? `#${profile.queuePosition}` : "—"}
+          </div>
           <div className="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
-            {[
-              { label: "Name", value: profile?.name || "—" },
-              { label: "Email", value: profile?.email || "—" },
-              { label: "Username", value: profile?.username || "—" },
-              { label: "Phone", value: profile?.phone || "—" },
-              { label: "Year", value: profile?.year || "—" },
-              { label: "Branch", value: profile?.branch || "—" },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-lg border border-white/10 bg-black/50 p-4"
-              >
-                <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">
-                  {item.label}
-                </div>
-                <div className="mt-2 text-sm text-white/80">{item.value}</div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Name</div>
+              <div className="mt-3">
+                <Input
+                  value={name}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setName(value)
+                    void savePatch({ name: value }, { debounceMs: 600 })
+                  }}
+                  placeholder="Your name"
+                />
               </div>
-            ))}
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Email</div>
+              <div className="mt-3 text-sm text-white/80">{profile?.email || "—"}</div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Username</div>
+              <div className="mt-3">
+                <Input
+                  value={username}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setUsername(value)
+                    void savePatch({ username: value }, { debounceMs: 600 })
+                  }}
+                  placeholder="$cmd_user"
+                />
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Phone</div>
+              <div className="mt-3">
+                <Input
+                  value={phone}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setPhone(value)
+                    void savePatch({ phone: value }, { debounceMs: 600 })
+                  }}
+                  placeholder="Phone number"
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Year</div>
+              <div className="mt-3">
+                <select
+                  value={year}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setYear(value)
+                    void savePatch({ year: value })
+                  }}
+                  className="h-12 w-full rounded-sm border border-neonGreen/50 bg-black/80 px-4 text-sm text-neonGreen outline-none focus:border-neonBlue/80 focus:ring-2 focus:ring-neonGreen/40"
+                >
+                  <option value="" disabled>Select</option>
+                  <option value="FE">FE</option>
+                  <option value="SE">SE</option>
+                  <option value="TE">TE</option>
+                  <option value="BE">BE</option>
+                </select>
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Branch</div>
+              <div className="mt-3">
+                <select
+                  value={branch}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setBranch(value)
+                    void savePatch({ branch: value })
+                  }}
+                  className="h-12 w-full rounded-sm border border-neonGreen/50 bg-black/80 px-4 text-sm text-neonGreen outline-none focus:border-neonBlue/80 focus:ring-2 focus:ring-neonGreen/40"
+                >
+                  <option value="" disabled>Select</option>
+                  <option value="AI&DS">AI&DS</option>
+                  <option value="AIML">AIML</option>
+                  <option value="IOT">IOT</option>
+                  <option value="COMP">COMP</option>
+                  <option value="MECH">MECH</option>
+                  <option value="ELECT">ELECT</option>
+                </select>
+              </div>
+            </div>
           </div>
 
+          <div className="mt-8 text-xs uppercase tracking-[0.28em] text-white/60">
+            Update LinkedIn & Github profile to get your queue number for interview. If you edit any url further then you will be pushed behind in queue.
+          </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             <div className="rounded-lg border border-white/10 bg-black/50 p-4">
               <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">
