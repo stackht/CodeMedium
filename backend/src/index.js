@@ -297,6 +297,142 @@ function buildOtpEmail(otp, ttlMinutes) {
   return { subject, text, html }
 }
 
+function buildForgotOtpEmail(otp, ttlMinutes) {
+  const subject = "CMD Recovery Code — One-Time Password"
+  const text = [
+    "CMD // ACCOUNT RECOVERY",
+    "",
+    `One-Time Password: ${otp}`,
+    `Valid for: ${ttlMinutes} minutes`,
+    "",
+    "If you did not request this code, ignore this message.",
+    "— CMD Decryptors",
+  ].join("\n")
+
+  const header = `
+    <div style="border:1px solid #1e2a1e;border-radius:12px;overflow:hidden;background:#0b120b;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0d160d;border-bottom:1px solid #1e2a1e;">
+        <div style="font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.35em;color:#a5f3a5;text-transform:uppercase;">CMD</div>
+        <div style="display:flex;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+        </div>
+      </div>
+  `
+
+  const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="supported-color-schemes" content="dark" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body style="margin:0;padding:0;background:#050805;color:#e6f3e6;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#050805" style="background:#050805;">
+          <tr>
+            <td align="center" style="padding:24px;">
+              <table role="presentation" width="620" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:620px;background:#050805;color:#e6f3e6;">
+                <tr>
+                  <td style="font-family:'Courier New',monospace;">
+                    ${header}
+                    <div style="padding:22px 22px 18px;color:#dff0df;background:#0a110a;">
+                      <div style="letter-spacing:0.35em;color:#7fe67f;font-size:12px;text-transform:uppercase;">CMD // Account Recovery</div>
+                      <div style="margin:14px 0 6px;font-size:18px;">
+                        Recovery <span style="color:#9dff9d;">OTP</span>
+                      </div>
+                      <div style="display:inline-block;margin:10px 0 16px;padding:10px 14px;border:1px dashed #284028;border-radius:6px;background:#0c140c;color:#b7ffb7;font-size:26px;letter-spacing:0.24em;">
+                        ${otp}
+                      </div>
+                      <div style="opacity:0.85;">
+                        Valid for <strong style="color:#b7ffb7;">${ttlMinutes} minutes</strong>.
+                      </div>
+                      <div style="margin:18px 0 0;border-top:1px solid #1e2a1e;"></div>
+                      <div style="margin-top:14px;font-size:12px;opacity:0.7;">If you did not request this code, ignore this message.</div>
+                      <div style="margin-top:10px;font-size:12px;opacity:0.7;">— CMD Decryptors</div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `
+
+  return { subject, text, html }
+}
+
+function buildAccountDetailsEmail(username) {
+  const subject = "CMD Recovery — Account Details"
+  const text = [
+    "CMD // ACCOUNT RECOVERY",
+    "",
+    `Username: ${username}`,
+    "",
+    "Security note: Your password cannot be emailed (it is stored securely).",
+    "If you forgot your password, reset it from the CMD interface after OTP verification.",
+    "",
+    "— CMD Decryptors",
+  ].join("\n")
+
+  const html = `
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="supported-color-schemes" content="dark" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body style="margin:0;padding:0;background:#050805;color:#e6f3e6;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#050805" style="background:#050805;">
+          <tr>
+            <td align="center" style="padding:24px;">
+              <table role="presentation" width="620" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:620px;background:#050805;color:#e6f3e6;">
+                <tr>
+                  <td style="font-family:'Courier New',monospace;">
+                    <div style="border:1px solid #1e2a1e;border-radius:12px;overflow:hidden;background:#0b120b;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0d160d;border-bottom:1px solid #1e2a1e;">
+                        <div style="font-size:12px; letter-spacing:0.35em; color:#a5f3a5; text-transform:uppercase;">CMD</div>
+                        <div style="display:flex;gap:6px;">
+                          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+                          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+                          <span style="width:8px;height:8px;border-radius:999px;background:#1f2a1f;"></span>
+                        </div>
+                      </div>
+                      <div style="padding:22px 22px 18px;color:#dff0df;background:#0a110a;">
+                        <div style="letter-spacing:0.35em;color:#7fe67f;font-size:12px;text-transform:uppercase;">CMD // Account Details</div>
+                        <div style="margin:14px 0 6px;font-size:18px;">
+                          Username <span style="color:#9dff9d;">Recovered</span>
+                        </div>
+                        <div style="display:inline-block;margin:10px 0 16px;padding:10px 14px;border:1px dashed #284028;border-radius:6px;background:#0c140c;color:#b7ffb7;font-size:16px;letter-spacing:0.12em;">
+                          ${username}
+                        </div>
+                        <div style="opacity:0.85;line-height:1.7;">
+                          Security note: we cannot email your current password (it is stored securely).
+                          If needed, reset it from the CMD interface after OTP verification.
+                        </div>
+                        <div style="margin:18px 0 0;border-top:1px solid #1e2a1e;"></div>
+                        <div style="margin-top:10px;font-size:12px;opacity:0.7;">— CMD Decryptors</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  `
+
+  return { subject, text, html }
+}
+
 function buildConfirmEmail() {
   const subject = "CMD Registration Confirmed"
   const text = [
@@ -690,12 +826,8 @@ app.post("/auth/forgot/request-otp", async (req, res) => {
       },
     })
 
-    await sendMail({
-      to: email,
-      subject: "Code Medium — Password Reset OTP",
-      text: `Your OTP is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes.`,
-      html: `<p>Your OTP is <b>${otp}</b>.</p><p>It expires in ${OTP_TTL_MINUTES} minutes.</p>`,
-    })
+    const recoveryEmail = buildForgotOtpEmail(otp, OTP_TTL_MINUTES)
+    await sendMail({ to: email, ...recoveryEmail })
 
     return res.json({ ok: true })
   } catch (error) {
@@ -734,13 +866,8 @@ app.post("/auth/forgot/verify-otp", async (req, res) => {
       data: { verifiedAt: new Date() },
     })
 
-    // Email username; password cannot be recovered (stored as hash).
-    await sendMail({
-      to: email,
-      subject: "Code Medium — Account Details",
-      text: `Your username is ${user.username}.\n\nFor security, we cannot send your current password. If you forgot it, reset it from the app.`,
-      html: `<p>Your username is <b>${user.username}</b>.</p><p>For security, we cannot send your current password (it is not stored in plain text). If you forgot it, reset it from the app.</p>`,
-    })
+    const detailsEmail = buildAccountDetailsEmail(user.username)
+    await sendMail({ to: email, ...detailsEmail })
 
     return res.json({ ok: true, username: user.username })
   } catch (error) {
