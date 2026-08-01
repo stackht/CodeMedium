@@ -10,6 +10,7 @@ import { resetForm, setStatus, updateField } from "../lib/features/formSlice"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
+import { Select } from "./ui/select"
 
 export default function FormSection() {
   const dispatch = useDispatch<AppDispatch>()
@@ -298,7 +299,7 @@ export default function FormSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="terminal-title font-orbitron text-3xl text-neonGreen"
         >
           Participation Form
@@ -308,10 +309,10 @@ export default function FormSection() {
           className={`relative z-[9999] mt-10 grid gap-6 ${mode === "login" ? "lg:grid-cols-2" : ""}`}
         >
           <motion.form
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             onSubmit={(event) => {
               event.preventDefault()
               if (status === "loading") return
@@ -327,7 +328,7 @@ export default function FormSection() {
                 submitCredentials()
               }
             }}
-            className="glass-panel relative space-y-6 rounded-3xl p-5 sm:p-8"
+            className="glass-panel-cinematic relative space-y-6 rounded-sm p-5 sm:p-8"
           >
             <div className="terminal-tabs inline-flex flex-wrap items-center gap-3">
             <button
@@ -398,75 +399,37 @@ export default function FormSection() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="year">Year</Label>
-                  <div className="relative">
-                    <select
-                      id="year"
-                      className="h-12 w-full appearance-none rounded-lg border border-neonGreen/15 bg-black/50 px-4 pr-10 text-sm text-[#d8e6d8] shadow-inner shadow-black/70 outline-none transition focus:border-neonGreen/60 focus:ring-2 focus:ring-neonGreen/30"
-                      value={year}
-                      onChange={(event) =>
-                        dispatch(updateField({ field: "year", value: event.target.value }))
-                      }
-                      required
-                    >
-                      <option value="" disabled className="bg-[#0b140f] text-[#d8e6d8]">
-                        Select year
-                      </option>
-                      <option value="FE" className="bg-[#0b140f] text-[#d8e6d8]">
-                        FE
-                      </option>
-                      <option value="SE" className="bg-[#0b140f] text-[#d8e6d8]">
-                        SE
-                      </option>
-                      <option value="TE" className="bg-[#0b140f] text-[#d8e6d8]">
-                        TE
-                      </option>
-                      <option value="BE" className="bg-[#0b140f] text-[#d8e6d8]">
-                        BE
-                      </option>
-                    </select>
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neonGreen/70">
-                      ▾
-                    </span>
-                  </div>
+                  <Select
+                    id="year"
+                    value={year}
+                    onChange={(value) => dispatch(updateField({ field: "year", value }))}
+                    options={[
+                      { value: "FE", label: "FE" },
+                      { value: "SE", label: "SE" },
+                      { value: "TE", label: "TE" },
+                      { value: "BE", label: "BE" },
+                    ]}
+                    placeholder="Select year"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="branch">Branch</Label>
-                  <div className="relative">
-                    <select
-                      id="branch"
-                      className="h-12 w-full appearance-none rounded-lg border border-neonGreen/15 bg-black/50 px-4 pr-10 text-sm text-[#d8e6d8] shadow-inner shadow-black/70 outline-none transition focus:border-neonGreen/60 focus:ring-2 focus:ring-neonGreen/30"
-                      value={branch}
-                      onChange={(event) =>
-                        dispatch(updateField({ field: "branch", value: event.target.value }))
-                      }
-                      required
-                    >
-                      <option value="" disabled className="bg-[#0b140f] text-[#d8e6d8]">
-                        Select branch
-                      </option>
-                      <option value="AI&DS" className="bg-[#0b140f] text-[#d8e6d8]">
-                        AI&DS
-                      </option>
-                      <option value="AIML" className="bg-[#0b140f] text-[#d8e6d8]">
-                        AIML
-                      </option>
-                      <option value="IOT" className="bg-[#0b140f] text-[#d8e6d8]">
-                        IOT
-                      </option>
-                      <option value="COMP" className="bg-[#0b140f] text-[#d8e6d8]">
-                        COMP
-                      </option>
-                      <option value="MECH" className="bg-[#0b140f] text-[#d8e6d8]">
-                        MECH
-                      </option>
-                      <option value="ELECT" className="bg-[#0b140f] text-[#d8e6d8]">
-                        ELECT
-                      </option>
-                    </select>
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neonGreen/70">
-                      ▾
-                    </span>
-                  </div>
+                  <Select
+                    id="branch"
+                    value={branch}
+                    onChange={(value) => dispatch(updateField({ field: "branch", value }))}
+                    options={[
+                      { value: "AI&DS", label: "AI&DS" },
+                      { value: "AIML", label: "AIML" },
+                      { value: "IOT", label: "IOT" },
+                      { value: "COMP", label: "COMP" },
+                      { value: "MECH", label: "MECH" },
+                      { value: "ELECT", label: "ELECT" },
+                    ]}
+                    placeholder="Select branch"
+                    required
+                  />
                 </div>
               </div>
             </>
@@ -476,8 +439,8 @@ export default function FormSection() {
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="identifier">Username or Email</Label>
-                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/80 shadow-inner shadow-black/60 focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/30">
-                  <span className="text-neonGreen/80">$</span>
+                <div className="flex items-center gap-2 rounded-sm border border-neonGreen/20 bg-[#030a06] px-3 text-sm text-[#d8ffd2] focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/20">
+                  <span className="text-neonGreen/70">$</span>
                   <input
                     id="identifier"
                     className="h-12 w-full bg-transparent outline-none"
@@ -516,7 +479,7 @@ export default function FormSection() {
                   <button
                     type="button"
                     onClick={() => setShowLoginPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/60 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/30"
                     aria-label={showLoginPassword ? "Hide password" : "Show password"}
                   >
                     {showLoginPassword ? (
@@ -549,8 +512,8 @@ export default function FormSection() {
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="username">Create Username</Label>
-                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/80 shadow-inner shadow-black/60 focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/30">
-                  <span className="text-neonGreen/80">$</span>
+                <div className="flex items-center gap-2 rounded-sm border border-neonGreen/20 bg-[#030a06] px-3 text-sm text-[#d8ffd2] focus-within:border-neonGreen/60 focus-within:ring-2 focus-within:ring-neonGreen/20">
+                  <span className="text-neonGreen/70">$</span>
                   <input
                     id="username"
                     className="h-12 w-full bg-transparent outline-none"
@@ -581,7 +544,7 @@ export default function FormSection() {
                   <button
                     type="button"
                     onClick={() => setShowRegisterPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/60 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/30"
                     aria-label={showRegisterPassword ? "Hide password" : "Show password"}
                   >
                     {showRegisterPassword ? (
@@ -596,7 +559,7 @@ export default function FormSection() {
           )}
 
           {mode === "register" && step === "done" && (
-            <div className="text-sm text-white/70">
+            <div className="text-sm text-[#d8ffd2]/70">
               Registration complete and session saved locally.
             </div>
           )}
@@ -618,7 +581,7 @@ export default function FormSection() {
                         ? "Create Account"
                         : "Done"}
             </Button>
-            <div className="text-xs uppercase tracking-[0.3em] text-white/40">
+            <div className="text-xs uppercase tracking-[0.3em] text-[#d8ffd2]/40">
               {status === "loading" && "Encrypting submission..."}
               {status === "error" && message}
               {status === "success" && message}
@@ -628,7 +591,13 @@ export default function FormSection() {
           </motion.form>
 
           {mode === "login" && (
-            <div className="glass-panel space-y-4 rounded-3xl p-5 sm:p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="glass-panel-cinematic space-y-4 rounded-sm p-5 sm:p-8"
+            >
               <div className="text-xs uppercase tracking-[0.3em] text-neonGreen/70">
                 Forgot Password/Username
               </div>
@@ -680,7 +649,7 @@ export default function FormSection() {
 
                 {forgotStep === "choice" && (
                   <>
-                    <div className="text-xs uppercase tracking-[0.28em] text-white/70">
+                    <div className="text-xs uppercase tracking-[0.28em] text-[#d8ffd2]/70">
                       Use same password, or update?
                     </div>
                     <div className="flex flex-wrap gap-3">
@@ -719,7 +688,7 @@ export default function FormSection() {
                       <button
                         type="button"
                         onClick={() => setShowForgotPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/70 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/40"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm p-2 text-neonGreen/60 hover:text-neonGreen focus:outline-none focus:ring-2 focus:ring-neonGreen/30"
                         aria-label={showForgotPassword ? "Hide password" : "Show password"}
                       >
                         {showForgotPassword ? (
@@ -746,7 +715,7 @@ export default function FormSection() {
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

@@ -1,0 +1,17 @@
+[Unit]
+Description=Code Medium backend API (Express + Prisma)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/codemedium/backend
+EnvironmentFile=/opt/codemedium/backend/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

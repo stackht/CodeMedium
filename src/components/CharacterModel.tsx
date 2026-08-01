@@ -100,34 +100,22 @@ export default function CharacterModel({
     groupRef.current.rotation.set(0, rotateRef?.current ?? 0, 0)
   }, [basePosition, centered, modelScale, rotateRef])
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!groupRef.current) return
+    const step = Math.min(delta * 8, 1)
     const targetScale = hovered ? modelScale * 1.02 : modelScale
-    const scrollShift = centered ? 0.2 : 0
-    const parallaxX = 0
-    const parallaxY = 0
-    const targetPosition = new THREE.Vector3(
-      basePosition.x + parallaxX,
-      basePosition.y + parallaxY - scrollShift,
-      basePosition.z,
-    )
 
-    groupRef.current.position.copy(targetPosition)
-    groupRef.current.scale.setScalar(targetScale)
+    groupRef.current.position.set(basePosition.x, basePosition.y - (centered ? 0.2 : 0), basePosition.z)
+    groupRef.current.scale.setScalar(THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, step))
     const targetRotY = rotateRef?.current ?? 0
     groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotY, 0.12)
     groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, 0.2)
 
-    emissiveMaterials.current.forEach((mat) => {
+    for (let i = 0; i < emissiveMaterials.current.length; i++) {
+      const mat = emissiveMaterials.current[i]
       const base = emissiveBase.current.get(mat) ?? 0
-      if (mat.emissive) {
-        mat.emissiveIntensity = THREE.MathUtils.lerp(
-          mat.emissiveIntensity ?? base,
-          base,
-          0.2,
-        )
-      }
-    })
+      mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity ?? base, base, 0.2)
+    }
   })
 
   return (

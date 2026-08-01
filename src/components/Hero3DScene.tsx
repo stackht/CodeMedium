@@ -71,7 +71,12 @@ export default function Hero3DScene() {
         <div className="scanlines" />
       </div>
       <div className="absolute inset-[5vh_4vw] rounded-[4px] overflow-hidden">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }} shadows className="h-full w-full">
+        <Canvas
+          camera={{ position: [0, 0, 8], fov: 45 }}
+          dpr={[0.6, 1.0]}
+          gl={{ antialias: false, powerPreference: "low-power" }}
+          className="h-full w-full"
+        >
           <Suspense fallback={<Loader />}>
             <CameraController scrollRef={scrollRef} hoveredRef={hoveredRef} />
             <LightingSetup />
@@ -81,10 +86,9 @@ export default function Hero3DScene() {
               <FloatingObjects />
             </Physics>
             <EffectComposer>
-              <Bloom intensity={0.8} luminanceThreshold={0.2} mipmapBlur />
-              <DepthOfField focusDistance={0.02} focalLength={0.02} bokehScale={1.2} />
-              <Noise opacity={0.06} />
-              <Vignette eskil={false} offset={0.25} darkness={0.75} />
+              <Bloom intensity={0.5} luminanceThreshold={0.3} mipmapBlur />
+              <Noise opacity={0.04} />
+              <Vignette eskil={false} offset={0.2} darkness={0.6} />
             </EffectComposer>
           </Suspense>
         </Canvas>

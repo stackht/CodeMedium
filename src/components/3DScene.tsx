@@ -7,7 +7,7 @@ import * as THREE from "three"
 
 function MatrixParticles() {
   const pointsRef = useRef<THREE.Points>(null)
-  const count = 2000
+  const count = 1200
   const positions = useMemo(() => {
     const data = new Float32Array(count * 3)
     for (let i = 0; i < count; i += 1) {
@@ -58,12 +58,12 @@ function ParallaxGroup({ children }: { children: React.ReactNode }) {
 export default function ThreeDScene() {
   return (
     <div className="absolute inset-0 -z-10">
-      <Canvas camera={{ position: [0, 6, 16], fov: 55 }}>
+      <Canvas camera={{ position: [0, 6, 16], fov: 55 }} dpr={[0.6, 1.0]} gl={{ antialias: false, powerPreference: "low-power" }}>
         <color attach="background" args={["#000000"]} />
         <fog attach="fog" args={["#000000", 10, 35]} />
-        <ambientLight intensity={0.6} />
-        <pointLight position={[10, 12, 10]} intensity={1.4} color="#00f0ff" />
-        <pointLight position={[-10, 8, -10]} intensity={0.9} color="#39ff14" />
+        <ambientLight intensity={0.4} />
+        <pointLight position={[10, 12, 10]} intensity={1.0} color="#00f0ff" />
+        <pointLight position={[-10, 8, -10]} intensity={0.6} color="#39ff14" />
 
         <ParallaxGroup>
           <Float speed={2} rotationIntensity={0.6} floatIntensity={0.5}>

@@ -166,22 +166,23 @@ export default function ChallengesPage() {
   }
 
   return (
-    <main className="hero-bg relative h-screen overflow-y-auto px-4 py-0 text-white/80 sm:px-6">
-      <div className="noise-overlay absolute inset-0 opacity-25" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(0,255,0,0.18),transparent_40%),radial-gradient(circle_at_80%_60%,rgba(0,229,255,0.12),transparent_45%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(0,255,0,0.06),transparent_50%)]" />
-      <div className="relative mx-auto max-w-6xl space-y-6">
-        <div className="sticky top-0 z-30 w-full overflow-x-hidden bg-[#050805]/95 py-3 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-3 px-4 text-center sm:px-6">
-            <div className="terminal-title terminal-title-plain w-full min-w-0 truncate whitespace-nowrap font-orbitron text-xl text-neonGreen sm:text-2xl md:text-3xl">
-              Cmd User Shell
+    <main className="cm-workspace cm-participant h-screen overflow-y-auto">
+      <div className="cm-crt" aria-hidden="true" />
+      <div className="cm-workspace-orbit" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1320px] space-y-6 px-4 pb-12 sm:px-6">
+        <div className="cm-workspace-header sticky top-0 z-30">
+          <div className="flex w-full flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="cm-workspace-eyebrow">Code Medium / Candidate space</div>
+              <div className="cm-workspace-title">Build queue</div>
             </div>
-            <div className="w-full text-xs uppercase tracking-[0.28em] text-neonGreen/80">
-              Queue Number: {queueNumber ? `#${queueNumber}` : "—"}
+            <div className="cm-queue-pill">
+              <span>Queue position</span>
+              <strong>{queueNumber ? `#${queueNumber}` : "—"}</strong>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Button type="button" variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto">
-                Back
+                Home
               </Button>
               <Button type="button" variant="ghost" onClick={() => router.push("/participant/profile")} className="w-full sm:w-auto">
                 Profile
@@ -189,7 +190,22 @@ export default function ChallengesPage() {
             </div>
           </div>
         </div>
-        <div className="glass-panel mt-6 rounded-xl border border-neonGreen/40 bg-[#050805] p-5 shadow-[0_0_35px_rgba(0,255,0,0.2)] sm:p-6">
+        <div className="cm-workspace-panel glass-panel mt-6 p-5 sm:p-8">
+          <div className="cm-candidate-brief">
+            <div>
+              <span>Current stage</span>
+              <strong>{activeChallenge ? "Challenge selected" : "Choose your problem"}</strong>
+            </div>
+            <p>
+              {activeChallenge
+                ? "Your problem is secured. Prepare a clear approach and upload supporting work after the interview."
+                : "Choose one problem that genuinely interests you. Selection is final until you release it."}
+            </p>
+            <div className={`cm-stage-signal ${activeChallenge ? "is-active" : ""}`}>
+              <i />
+              {activeChallenge ? `Problem ${activeChallenge.statementId}` : `${challenges.length} available`}
+            </div>
+          </div>
           <div className="terminal-tabs mb-6 inline-flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -269,17 +285,21 @@ export default function ChallengesPage() {
 
           {activeTab === "shell" && (
             <>
-              <div className="mb-4 text-xs uppercase tracking-[0.35em] text-white/70">
-                Select and Seal One Problem
+              <div className="mb-5 flex items-end justify-between gap-4">
+                <div>
+                  <div className="cm-workspace-eyebrow">Problem library</div>
+                  <div className="cm-list-heading">Select one challenge</div>
+                </div>
+                <span className="cm-list-count">{String(challenges.length).padStart(2, "0")} prompts</span>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {challenges.map((item, index) => (
                   <div
                     key={item}
-                    className="rounded-lg border border-white/10 bg-black/60 p-4 shadow-inner shadow-black/60"
+                    className="cm-challenge-card rounded-lg border border-white/10 bg-black/60 p-4 shadow-inner shadow-black/60"
                   >
-                    <div className="text-xs uppercase tracking-[0.2em] text-neonGreen/70">
-                      Problem {index + 1}
+                    <div className="cm-challenge-number">
+                      {String(index + 1).padStart(2, "0")}
                     </div>
                     <div className="mt-2 text-sm text-white/80">{item}</div>
                     <div className="mt-4 flex justify-end">

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
+import { Select } from "../../../components/ui/select"
+import IdentityCard from "../../../components/IdentityCard"
 
 export default function ParticipantProfilePage() {
   const router = useRouter()
@@ -176,17 +178,21 @@ export default function ParticipantProfilePage() {
   if (!ready) return null
 
   return (
-    <main className="hero-bg relative h-screen overflow-y-auto px-4 py-0 text-white/80 sm:px-6">
-      <div className="noise-overlay absolute inset-0 opacity-25" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(0,255,0,0.18),transparent_40%),radial-gradient(circle_at_80%_60%,rgba(0,229,255,0.12),transparent_45%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(0,255,0,0.06),transparent_50%)]" />
-      <div className="relative mx-auto max-w-4xl space-y-6">
-        <div className="sticky top-0 z-30 w-full overflow-x-hidden bg-[#050805]/95 py-3 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-center gap-3 px-4 text-center sm:px-6">
-            <div className="terminal-title terminal-title-plain w-full min-w-0 truncate whitespace-nowrap font-orbitron text-xl text-neonGreen sm:text-2xl md:text-3xl">
-              Cmd Profile Shell
+    <main className="cm-workspace cm-profile h-screen overflow-y-auto">
+      <div className="cm-crt" aria-hidden="true" />
+      <div className="cm-workspace-orbit" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1100px] space-y-6 px-4 pb-12 sm:px-6">
+        <div className="cm-workspace-header sticky top-0 z-30">
+          <div className="flex w-full flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="cm-workspace-eyebrow">Code Medium / Identity</div>
+              <div className="cm-workspace-title">Builder profile</div>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div className="cm-queue-pill">
+              <span>Queue position</span>
+              <strong>{profile?.queuePosition ? `#${profile.queuePosition}` : "—"}</strong>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <Button type="button" variant="ghost" onClick={() => router.push("/participant")} className="w-full sm:w-auto">
                 Back
               </Button>
@@ -204,12 +210,27 @@ export default function ParticipantProfilePage() {
             </div>
           </div>
         </div>
-        <div className="glass-panel mt-6 rounded-xl border border-neonGreen/40 bg-[#050805] p-5 shadow-[0_0_35px_rgba(0,255,0,0.2)] sm:p-8">
-          <div className="text-xs uppercase tracking-[0.35em] text-white/70">
-            Participant Profile
-          </div>
-          <div className="mt-3 text-xs uppercase tracking-[0.28em] text-neonGreen/80">
-            Queue Number: {profile?.queuePosition ? `#${profile.queuePosition}` : "—"}
+        <div className="cm-workspace-panel glass-panel mt-6 p-5 sm:p-8">
+          <div className="cm-profile-summary">
+            <div className="cm-profile-monogram">
+              {(profile?.name || name || "CM")
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+            <div>
+              <span>Participant identity</span>
+              <strong>{profile?.name || name || "Complete your profile"}</strong>
+              <p>{profile?.email || "Your account details are saved automatically."}</p>
+            </div>
+            <div className="cm-profile-completion">
+              <span>Profile signal</span>
+              <strong>
+                {[name, username, phone, year, branch, linkedInUrl || githubUrl].filter(Boolean).length}/6
+              </strong>
+            </div>
           </div>
           <div className="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             <div className="rounded-lg border border-white/10 bg-black/50 p-4">
@@ -260,48 +281,46 @@ export default function ParticipantProfilePage() {
                 />
               </div>
             </div>
-            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
-              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Year</div>
-              <div className="mt-3">
-                <select
-                  value={year}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setYear(value)
-                    void savePatch({ year: value })
-                  }}
-                  className="h-12 w-full rounded-sm border border-neonGreen/50 bg-black/80 px-4 text-sm text-neonGreen outline-none focus:border-neonBlue/80 focus:ring-2 focus:ring-neonGreen/40"
-                >
-                  <option value="" disabled>Select</option>
-                  <option value="FE">FE</option>
-                  <option value="SE">SE</option>
-                  <option value="TE">TE</option>
-                  <option value="BE">BE</option>
-                </select>
-              </div>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-black/50 p-4">
-              <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Branch</div>
-              <div className="mt-3">
-                <select
-                  value={branch}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setBranch(value)
-                    void savePatch({ branch: value })
-                  }}
-                  className="h-12 w-full rounded-sm border border-neonGreen/50 bg-black/80 px-4 text-sm text-neonGreen outline-none focus:border-neonBlue/80 focus:ring-2 focus:ring-neonGreen/40"
-                >
-                  <option value="" disabled>Select</option>
-                  <option value="AI&DS">AI&DS</option>
-                  <option value="AIML">AIML</option>
-                  <option value="IOT">IOT</option>
-                  <option value="COMP">COMP</option>
-                  <option value="MECH">MECH</option>
-                  <option value="ELECT">ELECT</option>
-                </select>
-              </div>
-            </div>
+                <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+                  <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Year</div>
+                  <div className="mt-3">
+                    <Select
+                      value={year}
+                      onChange={(value) => {
+                        setYear(value)
+                        void savePatch({ year: value })
+                      }}
+                      options={[
+                        { value: "FE", label: "FE" },
+                        { value: "SE", label: "SE" },
+                        { value: "TE", label: "TE" },
+                        { value: "BE", label: "BE" },
+                      ]}
+                      placeholder="Select"
+                    />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-black/50 p-4">
+                  <div className="text-xs uppercase tracking-[0.25em] text-neonGreen/70">Branch</div>
+                  <div className="mt-3">
+                    <Select
+                      value={branch}
+                      onChange={(value) => {
+                        setBranch(value)
+                        void savePatch({ branch: value })
+                      }}
+                      options={[
+                        { value: "AI&DS", label: "AI&DS" },
+                        { value: "AIML", label: "AIML" },
+                        { value: "IOT", label: "IOT" },
+                        { value: "COMP", label: "COMP" },
+                        { value: "MECH", label: "MECH" },
+                        { value: "ELECT", label: "ELECT" },
+                      ]}
+                      placeholder="Select"
+                    />
+                  </div>
+                </div>
           </div>
 
           <div className="mt-8 text-xs uppercase tracking-[0.28em] text-white/60">
@@ -442,11 +461,25 @@ export default function ParticipantProfilePage() {
               {saving ? "Saving..." : "Save Links"}
             </Button>
             {saveMessage && (
-              <div className="text-xs uppercase tracking-[0.28em] text-neonGreen/80">
+              <div className="text-xs uppercase tracking-[0.28em] text-[#39ff14]/80">
                 {saveMessage}
               </div>
             )}
           </div>
+        </div>
+
+        {/* Identity Card */}
+        <div className="mt-10">
+          <IdentityCard
+            name={profile?.name || name}
+            email={profile?.email || ""}
+            username={profile?.username || username}
+            year={profile?.year || year}
+            branch={profile?.branch || branch}
+            linkedinUrl={profile?.linkedinUrl || linkedInUrl}
+            githubUrl={profile?.githubUrl || githubUrl}
+            queuePosition={profile?.queuePosition ?? null}
+          />
         </div>
       </div>
     </main>

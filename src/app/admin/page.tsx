@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "../../components/ui/button"
 import { Input } from "../../components/ui/input"
+import { Select } from "../../components/ui/select"
 
 type Participant = {
   id: string
@@ -403,57 +404,118 @@ export default function AdminPage() {
   if (!ready) return null
 
   return (
-    <main className="hero-bg relative h-screen overflow-y-auto px-6 py-0 text-white/80">
-      <div className="noise-overlay absolute inset-0 opacity-25" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(0,255,0,0.18),transparent_40%),radial-gradient(circle_at_80%_60%,rgba(0,229,255,0.12),transparent_45%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(0,255,0,0.06),transparent_50%)]" />
-      <div className="relative mx-auto max-w-6xl space-y-6">
-        <div className="sticky top-0 z-30 w-full overflow-x-hidden bg-[#050805]/95 py-3 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-3 px-4 text-center sm:px-6">
-            <div className="terminal-title terminal-title-plain w-full min-w-0 truncate whitespace-nowrap font-orbitron text-xl text-neonGreen sm:text-2xl md:text-3xl">
-              Cmd Admin
+    <main className="cm-workspace cm-admin h-screen overflow-y-auto">
+      <div className="cm-crt" aria-hidden="true" />
+      <div className="cm-scan-beam" aria-hidden="true" />
+      <div className="cm-workspace-orbit" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1500px] space-y-6 px-4 pb-12 sm:px-6">
+        {/* Terminal-style header */}
+        <div className="cm-workspace-header sticky top-0 z-30">
+          <div className="flex w-full flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-2 text-[#39ff14]/40">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="4 17 10 11 4 5" />
+                  <line x1="12" y1="19" x2="20" y2="19" />
+                </svg>
+              </div>
+              <div>
+                <div className="cm-workspace-eyebrow flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#39ff14] shadow-[0_0_6px_rgba(57,255,20,0.6)]" />
+                  CODE MEDIUM / OPS TERMINAL
+                </div>
+                <div className="cm-workspace-title">Selection control</div>
+              </div>
             </div>
-            <Button type="button" variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto">
-              Back
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="cm-live-status">
+                <i />
+                <span className="hidden sm:inline">Live workspace</span>
+                <span className="sm:hidden">LIVE</span>
+              </div>
+              <Button type="button" variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto text-[9px]">
+                Exit
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="glass-panel mt-6 rounded-xl border border-neonGreen/40 bg-[#050805] p-8 shadow-[0_0_35px_rgba(0,255,0,0.2)]">
-          <div className="terminal-tabs mb-6 inline-flex flex-wrap items-center gap-3">
+
+        {/* Main panel */}
+        <div className="cm-workspace-panel glass-panel mt-6 p-5 sm:p-8">
+          {/* Metric strip with labels */}
+          <div className="cm-metric-strip">
+            <div>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-[#39ff14] shadow-[0_0_4px_rgba(57,255,20,0.5)]" />
+                Total candidates
+              </span>
+              <strong>{rows.filter((row) => !demoNames.has(row.name)).length}</strong>
+              <small>Registered builders</small>
+            </div>
+            <div>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-[#ffd84d] shadow-[0_0_4px_rgba(255,216,77,0.5)]" />
+                Waiting online
+              </span>
+              <strong>{onlineCount}</strong>
+              <small>Live interview queue</small>
+            </div>
+            <div>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-[#00d9ff] shadow-[0_0_4px_rgba(0,217,255,0.5)]" />
+                Interviewed
+              </span>
+              <strong>{doneCount}</strong>
+              <small>Evaluation complete</small>
+            </div>
+            <div>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-[#39ff14] shadow-[0_0_4px_rgba(57,255,20,0.5)]" />
+                Approval rate
+              </span>
+              <strong>
+                {approvedCount + rejectedCount
+                  ? `${Math.round((approvedCount / (approvedCount + rejectedCount)) * 100)}%`
+                  : "—"}
+              </strong>
+              <small>{approvedCount} selected / {rejectedCount} declined</small>
+            </div>
+          </div>
+          <div className="terminal-tabs mb-6 inline-flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               className={`terminal-tab ${activeTab === "participants" ? "terminal-tab-active" : ""}`}
               onClick={() => setActiveTab("participants")}
             >
-              Participants
+              <span className="text-[#39ff14]/40 mr-1">&gt;</span> Participants
             </button>
             <button
               type="button"
               className={`terminal-tab ${activeTab === "online" ? "terminal-tab-active" : ""}`}
               onClick={() => setActiveTab("online")}
             >
-              Online ({onlineCount})
+              <span className="text-[#ffd84d]/40 mr-1">~</span> Online ({onlineCount})
             </button>
             <button
               type="button"
               className={`terminal-tab ${activeTab === "approved" ? "terminal-tab-active" : ""}`}
               onClick={() => setActiveTab("approved")}
             >
-              Approved
+              <span className="text-[#39ff14]/40 mr-1">+</span> Approved
             </button>
             <button
               type="button"
               className={`terminal-tab ${activeTab === "rejected" ? "terminal-tab-active" : ""}`}
               onClick={() => setActiveTab("rejected")}
             >
-              Rejected
+              <span className="text-red-400/40 mr-1">-</span> Rejected
             </button>
             <button
               type="button"
               className={`terminal-tab ${activeTab === "announce" ? "terminal-tab-active" : ""}`}
               onClick={() => setActiveTab("announce")}
             >
-              Announce
+              <span className="text-[#00d9ff]/40 mr-1">#</span> Announce
             </button>
           </div>
 
@@ -516,46 +578,55 @@ export default function AdminPage() {
 
           {(activeTab === "participants" || activeTab === "online" || activeTab === "approved" || activeTab === "rejected") && (
             <div className="mt-2 overflow-auto">
-              <div className="mb-4 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.28em] text-white/70">
-                <div className="mr-auto text-xs uppercase tracking-[0.28em] text-neonGreen/70">
-                  Total: {totalCount} · Done: {doneCount} · Online: {onlineCount} · Approved: {approvedCount} · Rejected: {rejectedCount}
-                </div>
+              <div className="flex flex-wrap items-center gap-3 pb-3 mb-4 border-b border-[#39ff14]/10 text-[9px] uppercase tracking-[0.2em] text-[#d8ffd2]/40">
+                <span className="text-[#39ff14]/70">$</span>
+                <span className="text-[#39ff14]/60">./status</span>
+                <span className="text-[#d8ffd2]/30">—</span>
+                <span>Total: <strong className="text-[#d8ffd2]/80">{totalCount}</strong></span>
+                <span>Online: <strong className="text-[#ffd84d]/80">{onlineCount}</strong></span>
+                <span>Done: <strong className="text-[#00d9ff]/80">{doneCount}</strong></span>
+                <span>Approved: <strong className="text-[#39ff14]/80">{approvedCount}</strong></span>
+                <span>Rejected: <strong className="text-red-400/80">{rejectedCount}</strong></span>
+              </div>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
                 <input
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search name/email/phone"
-                  className="h-9 w-full rounded border border-neonGreen/30 bg-black/60 px-3 text-xs text-white/80 sm:w-64"
+                  placeholder="$ ./search —name, email, phone"
+                  className="h-9 flex-1 min-w-[200px] rounded-sm border border-[#39ff14]/20 bg-[#020805] px-3 text-xs text-[#d8ffd2] outline-none placeholder:text-[#d8ffd2]/25 focus:border-[#39ff14]/60 focus:shadow-[0_0_0_1px_rgba(57,255,20,0.15)]"
                 />
                 <label className="flex items-center gap-2">
                   <span>Year</span>
-                  <select
-                    className="h-9 rounded border border-neonGreen/30 bg-black/60 px-2 text-xs text-white/80"
+                  <Select
                     value={yearFilter}
-                    onChange={(event) => setYearFilter(event.target.value)}
-                  >
-                    <option value="ALL">All</option>
-                    <option value="FE">FE</option>
-                    <option value="SE">SE</option>
-                    <option value="TE">TE</option>
-                    <option value="BE">BE</option>
-                  </select>
+                    onChange={(value) => setYearFilter(value)}
+                    options={[
+                      { value: "ALL", label: "All" },
+                      { value: "FE", label: "FE" },
+                      { value: "SE", label: "SE" },
+                      { value: "TE", label: "TE" },
+                      { value: "BE", label: "BE" },
+                    ]}
+                    className="h-9 text-xs w-20"
+                  />
                 </label>
                 <label className="flex items-center gap-2">
                   <span>Branch</span>
-                  <select
-                    className="h-9 rounded border border-neonGreen/30 bg-black/60 px-2 text-xs text-white/80"
+                  <Select
                     value={branchFilter}
-                    onChange={(event) => setBranchFilter(event.target.value)}
-                  >
-                    <option value="ALL">All</option>
-                    <option value="AI&DS">AI&DS</option>
-                    <option value="AIML">AIML</option>
-                    <option value="IOT">IOT</option>
-                    <option value="COMP">COMP</option>
-                    <option value="MECH">MECH</option>
-                    <option value="ELECT">ELECT</option>
-                  </select>
+                    onChange={(value) => setBranchFilter(value)}
+                    options={[
+                      { value: "ALL", label: "All" },
+                      { value: "AI&DS", label: "AI&DS" },
+                      { value: "AIML", label: "AIML" },
+                      { value: "IOT", label: "IOT" },
+                      { value: "COMP", label: "COMP" },
+                      { value: "MECH", label: "MECH" },
+                      { value: "ELECT", label: "ELECT" },
+                    ]}
+                    className="h-9 text-xs w-24"
+                  />
                 </label>
               </div>
               <div className="space-y-4 lg:hidden">
